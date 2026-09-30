@@ -1,0 +1,13 @@
+# Independently authored Prism fixture: gentle-crosscolor
+TITLE "Prism authored gentle-crosscolor"
+LUT_3D_SIZE 2
+DOMAIN_MIN 0 0 0
+DOMAIN_MAX 1 1 1
+0 0 0
+0.9375 0 0
+0 0.96875 0.0625
+0.9375 1 0.0625
+0.0625 0 0.9375
+0.9375 0 0.9375
+0.0625 0.96875 0.9375
+0.9375 1 0.9375

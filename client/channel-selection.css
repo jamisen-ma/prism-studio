@@ -1,0 +1,19 @@
+.channel-selection { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 16px; min-width: 0; }
+.channel-selection .field-label { margin-top: 10px; }
+.channel-invert { display: flex; align-items: center; gap: 7px; font-size: 11px; margin: 12px 0; }
+.channel-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.channel-actions .button { flex: 1; min-width: 100px; padding: 8px 7px; font-size: 11px; }
+.channel-help { margin-top: 10px; color: var(--soft); font-size: 11px; line-height: 1.6; }
+.channel-help summary { cursor: pointer; color: var(--white); }
+.channel-preview { margin-top: 12px; font-size: 11px; min-width: 0; }
+.channel-preview-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.channel-preview-controls > * { min-width: 0; }
+.channel-preview-image { background: #171719; min-height: 80px; max-height: 300px; overflow: auto; margin-top: 10px; display: grid; place-items: center; border-radius: 6px; }
+.channel-preview-image img { display: block; }
+.channel-preview-image.fit img { width: 100%; height: auto; object-fit: contain; }
+.channel-preview-image.actual { display: block; }
+.channel-preview-image p { padding: 10px; color: var(--soft); line-height: 1.5; }
+.dense-overlay-status { pointer-events: none; position: absolute; bottom: 8px; left: 8px; padding: 4px 7px; border-radius: 4px; background: #171719dd; color: #ddd; font-size: 10px; max-width: calc(100% - 16px); }
+
+.channel-help summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }
+.channel-preview-image.actual img { max-width: none; width: auto; height: auto; }

@@ -1,0 +1,16 @@
+node_modules
+dist
+.prism
+test-results
+.git
+.gitignore
+docs
+tests
+photoshop-plugin
+*.log
+.env
+.env.*
+.DS_Store
+Dockerfile
+.dockerignore
+railway.json

@@ -1,0 +1,16 @@
+.hosted-loading{height:100dvh;background:var(--bg)}
+.hosted-signin{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 50% 0,#241f30 0,var(--bg) 60%)}
+.hosted-card{width:100%;max-width:360px;display:flex;flex-direction:column;padding:30px 28px 24px;border:1px solid var(--line);border-radius:12px;background:var(--panel);box-shadow:0 24px 60px #0008}
+.hosted-card h1{font-size:19px;font-weight:600;color:var(--white);margin:22px 0 6px;letter-spacing:-.3px}
+.hosted-lead{font-size:12px;line-height:1.6;color:var(--soft);margin:0 0 22px}
+.hosted-card input{padding:10px 11px;border:1px solid #3a3940;border-radius:6px;background:var(--panel-deep);font-size:13px}
+.hosted-brand{display:flex;align-items:center;gap:9px}
+.hosted-brand>span:last-child{font-family:'Manrope',sans-serif;font-size:20px;font-weight:800;letter-spacing:-1px;color:#eeeaf5}
+.hosted-error{font-size:11px;line-height:1.5;color:#f0a8a8;margin:0 0 12px}
+.hosted-switch{font-size:11px;color:var(--muted);text-align:center;margin:16px 0 0}
+.hosted-switch button{color:var(--accent);padding:0;font-size:11px}
+.account-initial{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--accent-bg);color:var(--accent);font-size:10px;font-weight:600}
+.account-email{max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.account-detail{padding:2px 10px 8px;font-size:11px;overflow-wrap:anywhere}
+.account-detail strong{font-weight:500;color:var(--white)}
+.codex-disconnect{padding:0;font-size:10px;color:var(--muted);text-decoration:underline}

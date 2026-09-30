@@ -1,0 +1,690 @@
+[
+  {
+    "id": "native_canvas_bounds",
+    "name": "Canvas bounds",
+    "category": "Prism Native",
+    "engine": "native",
+    "status": "available",
+    "command": "resize_canvas",
+    "note": "Expand or crop canvas bounds without rescaling original pixels. Select added space, then use AI Selection fill for outpainting."
+  },
+  {
+    "id": "native_select_subject",
+    "name": "Select subject locally",
+    "category": "Prism Native",
+    "engine": "native",
+    "status": "available",
+    "command": "select_subject",
+    "note": "Create a subject selection from a layer or the visible canvas using the installed local model. Inspect and refine its edges."
+  },
+  {
+    "id": "native_extract_subject",
+    "name": "Extract subject",
+    "category": "Prism Native",
+    "engine": "native",
+    "status": "available",
+    "command": "extract_subject",
+    "note": "Use the installed local model to create a protected cutout with separate alpha and original source pixels. Inspect and refine its edges."
+  },
+  {
+    "id": "native_place_cutout",
+    "name": "Place cutout",
+    "category": "Prism Native",
+    "engine": "native",
+    "status": "available",
+    "command": "place_layer",
+    "note": "Place a layer from another native document, fitting its complete visible bounds proportionally with pixel protection enabled by default."
+  },
+  {
+    "id": "move",
+    "name": "Move",
+    "category": "Selection",
+    "source": "https://helpx.adobe.com/photoshop/desktop/make-selections/get-started-selections/selection-tools-overview.html",
+    "status": "partial",
+    "tool": "move",
+    "note": "Native Move drags the selected content layer by integer pixels with a bounds guide and one undo step. Numeric rotate, scale and flip remain in Transform; groups and adjustments cannot be dragged.",
+    "command": "transform_layer"
+  },
+  {
+    "id": "rectangle_select",
+    "name": "Rectangular Marquee",
+    "category": "Selection",
+    "source": "https://helpx.adobe.com/photoshop/desktop/make-selections/get-started-selections/selection-tools-overview.html",
+    "status": "partial",
+    "tool": "select",
+    "note": "Rectangular selection with feather and inversion.",
+    "command": "select_region"
+  },
+  {
+    "id": "ellipse_select",
+    "name": "Elliptical Marquee",
+    "category": "Selection",
+    "source": "https://helpx.adobe.com/photoshop/desktop/make-selections/get-started-selections/selection-tools-overview.html",
+    "status": "partial",
+    "tool": "ellipse",
+    "note": "Elliptical selection with feather and inversion.",
+    "command": "select_region"
+  },
+  {
+    "id": "row_select",
+    "name": "Single Row Marquee",
+    "category": "Selection",
+    "source": "https://helpx.adobe.com/photoshop/desktop/make-selections/get-started-selections/selection-tools-overview.html",
+    "status": "partial",
+    "note": "Select an entire one-pixel row.",
+    "command": "select_region",
+    "tool": "row_select"
+  },
+  {
+    "id": "column_select",
+    "name": "Single Column Marquee",
+    "category": "Selection",
+    "source": "https://helpx.adobe.com/photoshop/desktop/make-selections/get-started-selections/selection-tools-overview.html",
+    "status": "partial",
+    "note": "Select an entire one-pixel column.",
+    "command": "select_region",
+    "tool": "column_select"
+  },
+  {
+    "id": "lasso",
+    "name": "Lasso",
+    "category": "Selection",
+    "source": "https://helpx.adobe.com/photoshop/desktop/make-selections/get-started-selections/selection-tools-overview.html",
+    "status": "partial",
+    "tool": "lasso",
+    "note": "Freehand points become a polygon selection.",
+    "command": "select_region"
+  },
+  {
+    "id": "polygon_lasso",
+    "name": "Polygonal Lasso",
+    "category": "Selection",
+    "source": "https://helpx.adobe.com/photoshop/desktop/make-selections/get-started-selections/selection-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "magnetic_lasso",
+    "name": "Magnetic Lasso",
+    "category": "Selection",
+    "source": "https://helpx.adobe.com/photoshop/desktop/make-selections/get-started-selections/selection-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "quick_select",
+    "name": "Quick Selection",
+    "category": "Selection",
+    "source": "https://helpx.adobe.com/photoshop/desktop/make-selections/get-started-selections/selection-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "magic_wand",
+    "name": "Magic Wand",
+    "category": "Selection",
+    "source": "https://helpx.adobe.com/photoshop/desktop/make-selections/get-started-selections/selection-tools-overview.html",
+    "status": "partial",
+    "note": "Four-connected or global RGBA color selection with tolerance; Shift adds, Alt subtracts, Shift+Alt intersects.",
+    "command": "select_color",
+    "tool": "magic_wand"
+  },
+  {
+    "id": "object_select",
+    "name": "Object Selection",
+    "category": "Selection",
+    "source": "https://helpx.adobe.com/photoshop/desktop/make-selections/get-started-selections/selection-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "artboard",
+    "name": "Artboard",
+    "category": "Layout",
+    "source": "https://helpx.adobe.com/photoshop/desktop/create-manage-layers/layout-design-tools/add-artboards-current-document.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "selection_brush",
+    "name": "Selection Brush",
+    "category": "Selection",
+    "source": "https://helpx.adobe.com/photoshop/desktop/make-selections/freehand-selections/create-quick-selections-with-selection-brush-tool.html",
+    "status": "partial",
+    "note": "Paint selection opacity with add, subtract, replace, hardness and pressure.",
+    "command": "paint_selection",
+    "tool": "selection_brush"
+  },
+  {
+    "id": "adjustment_brush",
+    "name": "Adjustment Brush",
+    "category": "Color",
+    "source": "https://helpx.adobe.com/photoshop/using/adjustment-brush.html",
+    "status": "partial",
+    "note": "Paint the mask of an editable adjustment layer. Select an adjustment layer first; also supports content-layer masks.",
+    "command": "paint_mask",
+    "tool": "mask_brush"
+  },
+  {
+    "id": "crop",
+    "name": "Crop",
+    "category": "Layout",
+    "source": "https://helpx.adobe.com/photoshop/desktop/crop-resize-transform/crop-straighten/crop-tool-options.html",
+    "status": "partial",
+    "tool": "crop",
+    "note": "Crop to a rectangle with reversible history. For native outpainting, expand Canvas bounds and use AI Selection fill; this Crop control does not generate pixels.",
+    "command": "crop_document"
+  },
+  {
+    "id": "perspective_crop",
+    "name": "Perspective Crop",
+    "category": "Layout",
+    "source": "https://helpx.adobe.com/photoshop/desktop/crop-resize-transform/crop-straighten/transform-perspective-while-cropping.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "slice",
+    "name": "Slice",
+    "category": "Layout",
+    "source": "https://helpx.adobe.com/photoshop/using/slicing-web-pages.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "slice_select",
+    "name": "Slice Select",
+    "category": "Layout",
+    "source": "https://helpx.adobe.com/photoshop/using/slicing-web-pages.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "frame",
+    "name": "Frame",
+    "category": "Layout",
+    "source": "https://helpx.adobe.com/photoshop/using/tool-techniques/frame-tool.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "brush",
+    "name": "Brush",
+    "category": "Painting",
+    "source": "https://helpx.adobe.com/photoshop/desktop/apply-painting-techniques/fill-objects-selections-layers/painting-tools-overview.html",
+    "status": "partial",
+    "tool": "brush",
+    "note": "Round pressure-sensitive brushes with size, opacity, and hardness.",
+    "command": "paint_stroke"
+  },
+  {
+    "id": "pencil",
+    "name": "Pencil",
+    "category": "Painting",
+    "source": "https://helpx.adobe.com/photoshop/desktop/apply-painting-techniques/fill-objects-selections-layers/painting-tools-overview.html",
+    "status": "partial",
+    "tool": "pencil",
+    "note": "Pixel-snapped hard-edged drawing.",
+    "command": "paint_stroke"
+  },
+  {
+    "id": "color_replace",
+    "name": "Color Replacement",
+    "category": "Painting",
+    "source": "https://helpx.adobe.com/photoshop/desktop/apply-painting-techniques/fill-objects-selections-layers/painting-tools-overview.html",
+    "status": "partial",
+    "tool": "color_replace",
+    "note": "Tolerance-based replacement with luminance preservation.",
+    "command": "paint_stroke"
+  },
+  {
+    "id": "mixer_brush",
+    "name": "Mixer Brush",
+    "category": "Painting",
+    "source": "https://helpx.adobe.com/photoshop/desktop/apply-painting-techniques/fill-objects-selections-layers/painting-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "history_brush",
+    "name": "History Brush",
+    "category": "Painting",
+    "source": "https://helpx.adobe.com/photoshop/desktop/apply-painting-techniques/fill-objects-selections-layers/painting-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "art_history_brush",
+    "name": "Art History Brush",
+    "category": "Painting",
+    "source": "https://helpx.adobe.com/photoshop/desktop/apply-painting-techniques/fill-objects-selections-layers/painting-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "gradient",
+    "name": "Gradient",
+    "category": "Painting",
+    "source": "https://helpx.adobe.com/photoshop/desktop/apply-painting-techniques/fill-objects-selections-layers/painting-tools-overview.html",
+    "status": "partial",
+    "note": "Editable linear, radial, angle, reflected and diamond gradients with alpha stops.",
+    "command": "add_gradient",
+    "tool": "gradient"
+  },
+  {
+    "id": "paint_bucket",
+    "name": "Paint Bucket",
+    "category": "Painting",
+    "source": "https://helpx.adobe.com/photoshop/desktop/apply-painting-techniques/fill-objects-selections-layers/painting-tools-overview.html",
+    "status": "partial",
+    "note": "Color-region fill, or fill the selection through MCP; opacity and selection boundaries are respected.",
+    "command": "fill_area",
+    "tool": "bucket"
+  },
+  {
+    "id": "eyedropper",
+    "name": "Eyedropper",
+    "category": "Painting",
+    "source": "https://helpx.adobe.com/photoshop/desktop/apply-painting-techniques/fill-objects-selections-layers/painting-tools-overview.html",
+    "status": "partial",
+    "note": "Sample actual composite RGBA; MCP also supports averaged sampling.",
+    "command": "sample_color",
+    "tool": "eyedropper"
+  },
+  {
+    "id": "color_sampler",
+    "name": "Color Sampler",
+    "category": "Painting",
+    "source": "https://helpx.adobe.com/photoshop/desktop/apply-painting-techniques/fill-objects-selections-layers/painting-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "clone",
+    "name": "Clone Stamp",
+    "category": "Painting",
+    "source": "https://helpx.adobe.com/photoshop/desktop/apply-painting-techniques/fill-objects-selections-layers/painting-tools-overview.html",
+    "status": "partial",
+    "tool": "clone",
+    "note": "Offset sampling from a frozen pre-stroke composite.",
+    "command": "paint_stroke"
+  },
+  {
+    "id": "pattern_stamp",
+    "name": "Pattern Stamp",
+    "category": "Painting",
+    "source": "https://helpx.adobe.com/photoshop/desktop/apply-painting-techniques/fill-objects-selections-layers/painting-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "spot_heal",
+    "name": "Spot Healing Brush",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/desktop/repair-retouch/remove-objects-fill-space/retouch-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "heal",
+    "name": "Healing Brush",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/desktop/repair-retouch/remove-objects-fill-space/retouch-tools-overview.html",
+    "status": "partial",
+    "tool": "heal",
+    "note": "Source sampling with local color matching; not content-aware synthesis.",
+    "command": "paint_stroke"
+  },
+  {
+    "id": "patch",
+    "name": "Patch",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/desktop/repair-retouch/remove-objects-fill-space/retouch-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "red_eye",
+    "name": "Red Eye",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/desktop/repair-retouch/remove-objects-fill-space/retouch-tools-overview.html",
+    "status": "partial",
+    "tool": "red_eye",
+    "note": "Red-dominance correction within the stroke.",
+    "command": "paint_stroke"
+  },
+  {
+    "id": "eraser",
+    "name": "Eraser",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/desktop/repair-retouch/remove-objects-fill-space/retouch-tools-overview.html",
+    "status": "partial",
+    "tool": "eraser",
+    "note": "Pressure-sensitive alpha erasing.",
+    "command": "paint_stroke"
+  },
+  {
+    "id": "background_eraser",
+    "name": "Background Eraser",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/desktop/repair-retouch/remove-objects-fill-space/retouch-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "magic_eraser",
+    "name": "Magic Eraser",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/desktop/repair-retouch/remove-objects-fill-space/retouch-tools-overview.html",
+    "status": "partial",
+    "note": "Erase a connected or global color region to transparency.",
+    "command": "fill_area",
+    "tool": "magic_eraser"
+  },
+  {
+    "id": "blur",
+    "name": "Blur",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/desktop/repair-retouch/remove-objects-fill-space/retouch-tools-overview.html",
+    "status": "partial",
+    "tool": "blur",
+    "note": "Localized Gaussian smoothing.",
+    "command": "paint_stroke"
+  },
+  {
+    "id": "sharpen",
+    "name": "Sharpen",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/desktop/repair-retouch/remove-objects-fill-space/retouch-tools-overview.html",
+    "status": "partial",
+    "tool": "sharpen",
+    "note": "Localized unsharp masking.",
+    "command": "paint_stroke"
+  },
+  {
+    "id": "smudge",
+    "name": "Smudge",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/desktop/repair-retouch/remove-objects-fill-space/retouch-tools-overview.html",
+    "status": "partial",
+    "tool": "smudge",
+    "note": "Pigment dragging with pickup.",
+    "command": "paint_stroke"
+  },
+  {
+    "id": "dodge",
+    "name": "Dodge",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/desktop/repair-retouch/remove-objects-fill-space/retouch-tools-overview.html",
+    "status": "partial",
+    "tool": "dodge",
+    "note": "Localized lightening.",
+    "command": "paint_stroke"
+  },
+  {
+    "id": "burn",
+    "name": "Burn",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/desktop/repair-retouch/remove-objects-fill-space/retouch-tools-overview.html",
+    "status": "partial",
+    "tool": "burn",
+    "note": "Localized darkening.",
+    "command": "paint_stroke"
+  },
+  {
+    "id": "sponge",
+    "name": "Sponge",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/desktop/repair-retouch/remove-objects-fill-space/retouch-tools-overview.html",
+    "status": "partial",
+    "tool": "sponge",
+    "note": "Localized saturation or desaturation.",
+    "command": "paint_stroke"
+  },
+  {
+    "id": "remove",
+    "name": "Remove",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/using/tool-techniques/remove-tool.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "content_aware_move",
+    "name": "Content-Aware Move",
+    "category": "Retouch",
+    "source": "https://helpx.adobe.com/photoshop/using/content-aware-patch-move.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "pen",
+    "name": "Pen",
+    "category": "Paths",
+    "source": "https://helpx.adobe.com/photoshop/desktop/draw-shapes-paths/create-shapes/drawing-tools-overview.html",
+    "status": "partial",
+    "note": "Editable cubic Bezier paths, draggable anchors and absolute control handles.",
+    "command": "add_path",
+    "tool": "pen"
+  },
+  {
+    "id": "freeform_pen",
+    "name": "Freeform Pen",
+    "category": "Paths",
+    "source": "https://helpx.adobe.com/photoshop/desktop/draw-shapes-paths/create-shapes/drawing-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "curvature_pen",
+    "name": "Curvature Pen",
+    "category": "Paths",
+    "source": "https://helpx.adobe.com/photoshop/desktop/draw-shapes-paths/create-shapes/drawing-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "add_anchor",
+    "name": "Add Anchor Point",
+    "category": "Paths",
+    "source": "https://helpx.adobe.com/photoshop/desktop/draw-shapes-paths/create-shapes/drawing-tools-overview.html",
+    "status": "partial",
+    "note": "Insert anchors through the editable path properties panel.",
+    "command": "update_path",
+    "tool": "path_edit"
+  },
+  {
+    "id": "delete_anchor",
+    "name": "Delete Anchor Point",
+    "category": "Paths",
+    "source": "https://helpx.adobe.com/photoshop/desktop/draw-shapes-paths/create-shapes/drawing-tools-overview.html",
+    "status": "partial",
+    "note": "Remove anchors through path properties while preserving an editable path.",
+    "command": "update_path",
+    "tool": "path_edit"
+  },
+  {
+    "id": "convert_point",
+    "name": "Convert Point",
+    "category": "Paths",
+    "source": "https://helpx.adobe.com/photoshop/desktop/draw-shapes-paths/create-shapes/drawing-tools-overview.html",
+    "status": "partial",
+    "note": "Convert corner/smooth anchors and edit Bezier control handles.",
+    "command": "update_path",
+    "tool": "path_edit"
+  },
+  {
+    "id": "rectangle",
+    "name": "Rectangle",
+    "category": "Shapes",
+    "source": "https://helpx.adobe.com/photoshop/desktop/draw-shapes-paths/create-shapes/drawing-tools-overview.html",
+    "status": "partial",
+    "note": "Editable rectangle geometry with fill, stroke, masks, transforms and undo.",
+    "command": "add_shape",
+    "tool": "shape"
+  },
+  {
+    "id": "ellipse",
+    "name": "Ellipse",
+    "category": "Shapes",
+    "source": "https://helpx.adobe.com/photoshop/desktop/draw-shapes-paths/create-shapes/drawing-tools-overview.html",
+    "status": "partial",
+    "note": "Editable ellipse geometry with fill, stroke, masks, transforms and undo.",
+    "command": "add_shape",
+    "tool": "shape"
+  },
+  {
+    "id": "triangle",
+    "name": "Triangle",
+    "category": "Shapes",
+    "source": "https://helpx.adobe.com/photoshop/desktop/draw-shapes-paths/create-shapes/drawing-tools-overview.html",
+    "status": "partial",
+    "note": "Editable triangle geometry with fill, stroke, masks, transforms and undo.",
+    "command": "add_shape",
+    "tool": "shape"
+  },
+  {
+    "id": "polygon",
+    "name": "Polygon",
+    "category": "Shapes",
+    "source": "https://helpx.adobe.com/photoshop/desktop/draw-shapes-paths/create-shapes/drawing-tools-overview.html",
+    "status": "partial",
+    "note": "Editable polygon geometry with fill, stroke, masks, transforms and undo.",
+    "command": "add_shape",
+    "tool": "shape"
+  },
+  {
+    "id": "star",
+    "name": "Star",
+    "category": "Shapes",
+    "source": "https://helpx.adobe.com/photoshop/desktop/draw-shapes-paths/create-shapes/drawing-tools-overview.html",
+    "status": "partial",
+    "note": "Editable star geometry with fill, stroke, masks, transforms and undo.",
+    "command": "add_shape",
+    "tool": "shape"
+  },
+  {
+    "id": "line",
+    "name": "Line",
+    "category": "Shapes",
+    "source": "https://helpx.adobe.com/photoshop/desktop/draw-shapes-paths/create-shapes/drawing-tools-overview.html",
+    "status": "partial",
+    "note": "Editable line geometry with fill, stroke, masks, transforms and undo.",
+    "command": "add_shape",
+    "tool": "shape"
+  },
+  {
+    "id": "custom_shape",
+    "name": "Custom Shape",
+    "category": "Shapes",
+    "source": "https://helpx.adobe.com/photoshop/desktop/draw-shapes-paths/create-shapes/drawing-tools-overview.html",
+    "status": "partial",
+    "note": "Author a custom closed vector path. No imported shape-preset library.",
+    "command": "add_path",
+    "tool": "pen"
+  },
+  {
+    "id": "path_select",
+    "name": "Path Selection",
+    "category": "Paths",
+    "source": "https://helpx.adobe.com/photoshop/desktop/text-typography/text-on-paths-shapes/convert-text-to-shapes-or-work-paths.html",
+    "status": "partial",
+    "note": "Select a path layer and transform the whole path; no multi-path sub-selection.",
+    "command": "transform_layer",
+    "tool": "pointer"
+  },
+  {
+    "id": "direct_select",
+    "name": "Direct Selection",
+    "category": "Paths",
+    "source": "https://helpx.adobe.com/photoshop/desktop/text-typography/text-on-paths-shapes/convert-text-to-shapes-or-work-paths.html",
+    "status": "partial",
+    "note": "Move individual path anchors and edit their handles.",
+    "command": "update_path",
+    "tool": "path_edit"
+  },
+  {
+    "id": "text",
+    "name": "Horizontal Type",
+    "category": "Type",
+    "source": "https://helpx.adobe.com/photoshop/desktop/text-typography/get-started-with-text/add-text.html",
+    "status": "partial",
+    "tool": "text",
+    "note": "Editable system-font text with size, alignment, bold, and italic.",
+    "command": "add_text"
+  },
+  {
+    "id": "vertical_text",
+    "name": "Vertical Type",
+    "category": "Type",
+    "source": "https://helpx.adobe.com/photoshop/desktop/text-typography/get-started-with-text/add-text.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "text_mask",
+    "name": "Horizontal Type Mask",
+    "category": "Type",
+    "source": "https://helpx.adobe.com/photoshop/desktop/text-typography/text-on-paths-shapes/create-text-selection-borders.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "vertical_text_mask",
+    "name": "Vertical Type Mask",
+    "category": "Type",
+    "source": "https://helpx.adobe.com/photoshop/desktop/text-typography/text-on-paths-shapes/create-text-selection-borders.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "hand",
+    "name": "Hand",
+    "category": "View & measure",
+    "source": "https://helpx.adobe.com/photoshop/desktop/use-grids-measurement-guides/alignment-grids-guides/navigation-and-measuring-tools-overview.html",
+    "status": "partial",
+    "tool": "hand",
+    "note": "Pan the canvas view."
+  },
+  {
+    "id": "rotate_view",
+    "name": "Rotate View",
+    "category": "View & measure",
+    "source": "https://helpx.adobe.com/photoshop/desktop/use-grids-measurement-guides/alignment-grids-guides/navigation-and-measuring-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "zoom",
+    "name": "Zoom",
+    "category": "View & measure",
+    "source": "https://helpx.adobe.com/photoshop/desktop/use-grids-measurement-guides/alignment-grids-guides/navigation-and-measuring-tools-overview.html",
+    "status": "partial",
+    "tool": "zoom",
+    "note": "Fit and magnify the canvas view."
+  },
+  {
+    "id": "note",
+    "name": "Note",
+    "category": "View & measure",
+    "source": "https://helpx.adobe.com/photoshop/desktop/use-grids-measurement-guides/alignment-grids-guides/navigation-and-measuring-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "ruler",
+    "name": "Ruler",
+    "category": "View & measure",
+    "source": "https://helpx.adobe.com/photoshop/desktop/use-grids-measurement-guides/alignment-grids-guides/navigation-and-measuring-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  },
+  {
+    "id": "count",
+    "name": "Count",
+    "category": "View & measure",
+    "source": "https://helpx.adobe.com/photoshop/desktop/use-grids-measurement-guides/alignment-grids-guides/navigation-and-measuring-tools-overview.html",
+    "status": "planned",
+    "note": "Not implemented in Prism yet."
+  }
+]

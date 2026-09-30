@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1200" viewBox="0 0 1600 1200">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#e2cec5"/><stop offset=".7" stop-color="#e8cbb0"/><stop offset="1" stop-color="#f6d5a7"/></linearGradient>
+    <linearGradient id="sun" x2="0" y2="1"><stop stop-color="#f9e7bf"/><stop offset="1" stop-color="#ecb579"/></linearGradient>
+    <linearGradient id="front" x1="0" y1="0" x2=".6" y2="1"><stop stop-color="#374c4e"/><stop offset="1" stop-color="#1b3137"/></linearGradient>
+    <linearGradient id="hill" x2=".9" y2="1"><stop stop-color="#bb704a"/><stop offset="1" stop-color="#a95738"/></linearGradient>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".65" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".1"/></feComponentTransfer><feBlend mode="multiply" in="SourceGraphic"/></filter>
+  </defs>
+  <g filter="url(#grain)">
+    <path fill="url(#sky)" d="M0 0h1600v1200H0z"/>
+    <circle cx="975" cy="410" r="220" fill="url(#sun)"/>
+    <path d="M0 704C111 668 155 610 259 603 340 599 353 663 440 652 533 640 588 498 667 463 746 428 787 562 852 580 936 604 990 546 1050 576 1181 641 1175 693 1282 653 1404 608 1458 653 1600 621V1200H0Z" fill="#c69470"/>
+    <path d="M0 820C127 831 206 618 378 673 516 717 590 769 735 705 855 652 900 684 1012 747 1118 807 1225 572 1355 557 1451 546 1505 654 1600 642V1200H0Z" fill="url(#hill)"/>
+    <path d="M0 818C234 770 404 1035 591 913 712 834 745 838 847 855 1032 886 1159 740 1327 814 1435 862 1511 898 1600 849V1200H0Z" fill="#834d3d"/>
+    <path d="M0 910C176 923 239 847 406 968 562 1081 692 1013 821 963 959 909 1038 991 1153 1014 1300 1044 1479 883 1600 936V1200H0Z" fill="url(#front)"/>
+  </g>
+  <path d="M103 107H139" stroke="#634f48" stroke-width="2"/>
+  <text x="157" y="114" font-family="Arial,sans-serif" font-size="19" letter-spacing="5" fill="#634f48">PRISM ORIGINALS</text>
+  <text x="102" y="245" font-family="Georgia,serif" font-size="94" letter-spacing="-3" fill="#514743">Somewhere,</text>
+  <text x="102" y="348" font-family="Georgia,serif" font-size="94" letter-spacing="-3" fill="#514743" font-style="italic">a little quieter.</text>
+  <text x="105" y="414" font-family="Arial,sans-serif" font-size="17" letter-spacing="4" fill="#756458">A STUDY IN LIGHT &amp; LANDSCAPE</text>
+  <text x="104" y="1114" font-family="Arial,sans-serif" font-size="17" letter-spacing="3" fill="#dbd5c7">SOLSTICE — 001</text>
+  <text x="1496" y="1114" font-family="Arial,sans-serif" font-size="17" letter-spacing="3" text-anchor="end" fill="#dbd5c7">35° N / 116° W</text>
+</svg>

@@ -1,0 +1,7 @@
+.curves-bank-editor { display: grid; gap: 9px; min-width: 0; }
+.curves-bank-editor > .field-label select, .curve-conversion select { min-height: 30px; min-width: 0; width: 100%; color: #e4dced; background: #251f2e; border: 1px solid #4a3c59; border-radius: 5px; padding: 5px 8px; }
+.curves-bank-editor > .field-label select:focus-visible, .curve-conversion select:focus-visible { outline: 2px solid #b6a0df; outline-offset: 2px; }
+.curves-bank-editor .curve-conversion-note { font-size: 11px; line-height: 1.5; color: #e3c295; margin: 0; }
+.curves-bank-editor .curve-conversion > .field-label { margin-top: 9px; }
+.curves-bank-editor .curve-conversion p { margin: 9px 0; }
+.curves-bank-editor .curve-conversion-recover { justify-self: start; }

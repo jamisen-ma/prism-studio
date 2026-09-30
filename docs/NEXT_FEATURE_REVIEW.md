@@ -1,0 +1,71 @@
+# Next professional workflow review
+
+Reviewed 2026-09-19 against the current source tree. This is an independent source/documentation review, not a new full-suite or live-browser verification. Only this report was written. Private state, credentials, providers and installed packages were not accessed.
+
+The current README and feature-family matrix correctly describe an early standalone editor with substantial scoped functionality. They do not claim complete Photoshop parity. Keep that framing. The useful next work is closing interruptions in actual editing workflows and making successful AI instructions reusable.
+
+## Public claims that need synchronization
+
+Exact source locations at review time: `FEATURE_PARITY.md:20` (import limit), `:57` (typography), `:62` (print metadata); `CONTRACT.md:40`, `:45`, `:47`, `:49` (groups); `PRO_TOOLS.md:33` (filter count); `FILTER_STACK_DESIGN.md:120` (original filter verification); `ARCHITECTURE.md:31` (PSD); `ROADMAP.md:21` (completed stacks); `RASTER_OBJECT_DESIGN.md:7` and `:11` (completed presets); `README.md:86` (typography). Locations may move as root publishes the active documentation update.
+
+| Priority | Location and current claim | Evidence and recommended correction |
+| --- | --- | --- |
+| High | [FEATURE_PARITY.md](FEATURE_PARITY.md), baseline limits: “32 MiB imported image bytes.” | The native decoder limit is 32 MiB, but [MCP import](../server/mcp.mjs) explicitly limits files to **30 MiB**, and [shared `import_image`](../shared/commands.mjs) allows 40 MiB of base64, equivalent to at most 30 MiB decoded. Document the UI/MCP transfer limit separately from the native decoder ceiling. A user following the public limit can otherwise choose a 31 MiB file that the normal workflow rejects. The advertised native capability currently also exposes only the 32 MiB ceiling. |
+| Medium | [CONTRACT.md](CONTRACT.md), Native layer groups: group records are described as pass-through/normal; nonempty ungrouping lists visibility/opacity/mask requirements only. | [Native capabilities and validation](../server/native.mjs), [group helpers](../server/groups.mjs), [shared schemas](../shared/commands.mjs) and [Layers UI](../client/LayerStack.tsx) support isolated groups and 27 isolated blend modes. Nonempty isolated groups cannot be ungrouped, and placement/arrangement through isolated ancestors rejects. Update this section or explicitly mark the original contract historical and link [GROUP_COMPOSITING.md](GROUP_COMPOSITING.md). The older before/after group interpolation explanation applies to pass-through groups, not every group. |
+| Medium | [PRO_TOOLS.md](PRO_TOOLS.md), Editable raster layer filters: “All 18 supported kinds.” | [The shared schema](../shared/commands.mjs) and [filter helper](../server/layer-filters.mjs) include **20** kinds, adding Channel Mixer and Gradient Map. The README and feature matrix already say 20. Add the two kinds and link [COLOR_MAPPING.md](COLOR_MAPPING.md). The “all 18” browser sentence in [FILTER_STACK_DESIGN.md](FILTER_STACK_DESIGN.md) can remain as historical evidence only if labeled as the original milestone, followed by the later color-mapping verification. |
+| Medium | [ARCHITECTURE.md](ARCHITECTURE.md): “PSD/PSB ... remain future milestones.” | Bounded PSD import/export now has implementation, UI, MCP and independent format evidence. Say **broader PSD/PSB interoperability** remains future work and link [PSD_IMPORT.md](PSD_IMPORT.md) and [PSD_EXPORT.md](PSD_EXPORT.md). Preserve the important restrictions: flat RGB8 subsets, explicit rejects, and exact original import archives. |
+| Low | [ROADMAP.md](ROADMAP.md), stage 2 still says to implement editable filter stacks, although the working-foundation section reports them implemented. [RASTER_OBJECT_DESIGN.md](RASTER_OBJECT_DESIGN.md) still recommends outside-style presets “next.” | Separate completed foundations from remaining stack masks/baking/filter families. Mark the style-preset recommendation as fulfilled; its linked-raster proposal remains design only. These are sequencing inconsistencies, not missing production code. |
+| Low | [FEATURE_PARITY.md](FEATURE_PARITY.md), C7 includes resolution/physical-size metadata wholly in remaining scope; C5 already reports export density. | Keep color-managed print/prepress missing, but acknowledge implemented PNG/JPEG/TIFF density metadata. Distinguish that from persistent document physical units, proofing, CMYK and print layout. |
+| Pending active milestone | [FEATURE_PARITY.md](FEATURE_PARITY.md), C2 lists tracking/leading as missing; the README typography row lists only basic text controls. | [Text schema](../shared/commands.mjs), [spacing helper](../server/text-spacing.mjs), native capabilities and [Text UI](../client/TextTools.tsx) now contain tracking/leading. [WORK_LOG.md](WORK_LOG.md) still records browser/full validation in progress. Root is already updating this milestone: change the public claim only when those gates pass. Keep paragraph boxes, mixed styles, kerning and advanced font/layout features in remaining scope. |
+
+The initial `CONTRACT.md` is linked from the README as an initial contract, which partly explains its age. Its later group section nevertheless reads as current behavior; a short explicit supersession link is preferable to competing authoritative descriptions. Historic test counts should identify the milestone they validated instead of looking like a current exhaustive count.
+
+## Recommended next workflows
+
+These are proposed scopes, not implemented features. Suggested command names are design sketches. Each should land with native, shared-schema, MCP, browser, portable-project and independent pixel checks together.
+
+### 1. Retouch on a repair layer with explicit sampling
+
+**Value:** remove a small defect while retaining the source and editable color grade. Today clone/heal can write to a separate paint layer, but [native `paint_stroke`](../server/native.mjs) always freezes the full visible composite for sampling. [The schema](../shared/commands.mjs) and [brush controls](../client/CanvasTools.tsx) expose no sampling scope. Sampling an already graded composite into a repair layer beneath the grade can apply that grade again.
+
+Adobe documents Current Layer, Current & Below and All Layers sampling for Clone Stamp; its nondestructive workflow also describes separate-layer repairs and ignoring adjustment layers. These establish the workflow comparison, not expected identical healing pixels. [Clone sampling controls](https://helpx.adobe.com/photoshop/desktop/repair-retouch/heal-clone/retouch-images-with-the-clone-stamp-tool.html), [nondestructive retouching](https://helpx.adobe.com/photoshop/using/nondestructive-editing.html).
+
+**Bounded implementation:** add clone/heal-only `sampleMode: current|current-and-below|all` and `ignoreAdjustments`. Preserve `all` as the legacy default. Add an explicit “New repair layer” action and matching typed command/transaction placement, so the layer can sit immediately above the intended source. Keep a frozen sample for the complete stroke. Reuse the existing sampled healing algorithm and label it accurately.
+
+**Dependencies:** define sampling at a particular layer position within the canonical group tree, including isolated scopes and clipping chains. Build a read-only sampling renderer; do not splice a flat layer array and accidentally change ancestors or protection context. A first version may reject ambiguous isolated/clipped destinations with an actionable reason. Specify whether the destination's existing repair pixels participate. Sampling choice must never weaken the existing write-protection gate.
+
+**Small first delivery:** keep existing All Layers behavior unchanged everywhere; initially enable the new modes/ignore-adjustments only for a flat, unclipped document with a root raster target. `create_repair_layer {sourceLayerId, expectedRevision}` inserts an empty normal paint layer immediately above that source, so later adjustment layers remain above the repair. This avoids changing group compositing or source asset semantics. Advertise the scope and reject unsupported structures before allocation. Extend group-aware sampling only after its independent fixtures are ready.
+
+**Acceptance:** a graded-photo fixture proves that ignored adjustments are applied once after repair; a colored upper layer is excluded by Current & Below; current-layer sampling cannot copy another layer. An overlapping stroke never resamples its own new pixels. Soft selection edges, transparent pixels and protected regions remain exact under the declared coverage rules. A browser workflow and an MCP workflow create the repair layer, clone/heal, inspect, undo, reopen and export the same result. Source hashes and filter stacks remain unchanged.
+
+### 2. Move an additional mask independently or with its layer
+
+**Value:** reposition a masked photograph inside a layout, or move the cutout and its additional mask together. Currently [native transform semantics](../server/native.mjs) intentionally keep additional masks in document coordinates, and arrangement rejects masked content. That restriction is accurately disclosed but interrupts ordinary compositing.
+
+Adobe's documented linked-mask behavior moves a layer and its mask together; unlinking permits independent movement. [Adobe layer/mask linking](https://helpx.adobe.com/photoshop/desktop/create-masks/layer-masks/unlink-layers-and-masks.html).
+
+**Bounded implementation:** start with integer translations on individual content layers, an explicit mask target, and a persistent link setting. Existing projects retain today's unlinked/document-anchored behavior unless explicitly changed. Add numeric mask offsets and a captured Move gesture; one linked move creates one history step. Keep source cutout alpha distinct from the additional mask. Do not claim rotation, scaling or group-transform linkage in this first milestone; linked unsupported transforms should reject or require explicit unlinking.
+
+**Dependencies:** first specify outside-mask coverage, repeated off-canvas movement, bitmap offsets, internal clips and density. Avoid repeatedly cropping/rebaking the only mask representation: move-out/move-back should recover the retained coverage. Geometric feather must stay unquantized. Preserve existing protection, generation exclusions and clipping-chain rules. Extend graph/archive validation and grayscale mask inspection before exposing controls.
+
+**Acceptance:** linked movement carries the same mask edge with the content; unlinked movement leaves the mask fixed; mask-only movement never changes source assets. Test inverted feathered geometry, all 256 bitmap alpha values, nonunit density, prior canvas clips and move-out/move-back. Undo/redo, reopen and `.prism` roundtrip preserve link state and exact supported translation coverage. UI and MCP use identical offsets/revision guards, and legacy projects render unchanged.
+
+### 3. Save a successful instruction as a typed edit recipe
+
+**Value:** after the assistant creates a useful color/layout treatment, apply it to another image without reconstructing the same command sequence. This directly advances natural-language editing beyond one-off requests. Existing transactions already provide atomic edits; [FEATURE_PARITY.md](FEATURE_PARITY.md) correctly lists recipes/actions as missing.
+
+Adobe actions capture repeatable editing steps. Prism can offer a smaller typed recipe built around its existing validated commands. [Adobe action recording](https://helpx.adobe.com/photoshop/desktop/automate-tasks/create-record-actions/record-an-action.html).
+
+**Bounded implementation:** a document-local library of at most 16 recipes with at most 32 steps each, containing a strict allowlist of deterministic operations. Begin with adjustment/filter settings, text styling and outside styles. Bind named target slots to explicit current layer IDs; never guess a layer by name. Provide save, inspect, rename, delete, validate and apply through UI/MCP, plus portable persistence. Apply a recipe as one `apply_transaction`-style edit. Recipe validation reports unsupported targets without changing the document; an image dry-run preview can be a later extension.
+
+**Dependencies:** schema-versioned recipe records; target type/capability checks; unambiguous references to objects created earlier in the same recipe, or exclude creation initially. Preserve protection guards and metadata limits. Provider generation, imports, exports, arbitrary scripts, nested recipes and automatic cross-file batching stay outside this first contract. Existing style presets remain the simpler operation when only outside effects are needed.
+
+**Acceptance:** one recipe applies to three independently imported fixture documents with different IDs while modifying only explicitly bound targets. A missing layer, unsupported target, protected target or stale revision rejects before publication. Mid-sequence failure rolls back every step. Repeated request IDs do not add duplicate adjustments. Browser and official MCP runs agree; recipes survive reopen/project transfer; original source assets remain exact.
+
+## Order and release evidence
+
+Start with repair-layer sampling: it closes a specific photo-editing failure mode using the existing retouch engine. Design mask coordinates before implementing linkage; that work has wider geometry consequences. Recipe implementation can proceed alongside either once its restricted command allowlist is agreed.
+
+For each increment, retain a compact named fixture set and one inspectable example project, with source hashes, relevant before/after pixels, command trace and browser screenshot. Update capabilities and the feature matrix from the verified implementation. The full-frame 8-bit renderer, missing high-depth/color-managed workflows, broad PSD/PSB fidelity and advanced typography remain separate major dependencies; none of these three increments establishes complete professional parity.
+
+During this review, root reported the full suite at 631 passing tests and 83 native commands. Those are coordinator-reported current results, not checks rerun by this documentation audit; active typography/browser evidence remains owned by its implementers.

@@ -1,0 +1,7 @@
+# Photo Filter independent fixtures
+
+`reference.mjs` was authored for this repository. Its reduced BigInt fractions implement transmitted color, weighted encoded luma restoration and geometric gamut fitting independently of the production helper and its simplified integer numerator. It imports no production or prototype code and includes no third-party LUT, preset or algorithm implementation.
+
+Exports: `photoFilterReference(rgb, parameters={})`, `photoFilterReferenceStages`, `photoFilterRationalEqual`, test-authored `PHOTO_FILTER_DEFAULTS`, twenty literal `PHOTO_FILTER_GOLDENS`, and photographic provenance in `PHOTO_FILTER_PHOTO_GOLDENS`. Alpha, protection, masks, blending and stage order belong to caller tests; the reference maps RGB8 only. The richer stage result preserves rational components for exact luma/range/tie assertions.
+
+The photograph is the existing public fixture `tests/fixtures/tonal-color/astronaut.png`; its original provenance remains with that fixture. Its bytes equal the ignored `test-results/segmentation-public-fixture.png` used by the design probes. The listed output PNG hashes identify inspected design artifacts only. Tests compare decoded output bytes, not a promise of encoder stability. See `docs/PHOTO_FILTER_REVIEW.md` and the ignored `test-results/photo-filter-evaluation/review-*` evidence for the larger numerical and photographic comparison. Additive comparison code remains design-only and is not part of this fixture or the native policy.

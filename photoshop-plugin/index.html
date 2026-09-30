@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head><meta charset="UTF-8"><link rel="stylesheet" href="styles.css"></head>
+  <body>
+    <div class="panel">
+      <div class="brand"><div class="brand-mark">P</div><div><h1>Prism Studio</h1><p class="eyebrow">PHOTOSHOP BRIDGE</p></div></div>
+      <div class="status-card"><div id="status-dot" class="dot"></div><p id="status" role="status">Disconnected · connect when ready</p></div>
+      <h2>Your canvas, connected.</h2>
+      <p class="description">Describe your edits in Codex. Prism turns them into editable Photoshop layers, masks, and history steps.</p>
+      <div class="pairing">
+        <label for="token">Pairing token</label>
+        <input id="token" type="password" placeholder="Paste from Prism Studio setup" autocomplete="off">
+        <button id="connect" class="primary">Connect to Studio</button>
+        <button id="disconnect" class="secondary" disabled>Disconnect</button>
+        <p class="hint">Start the local companion, open Photoshop setup in Prism Studio, and copy its token here.</p>
+      </div>
+      <div class="activity"><p class="eyebrow">LATEST ACTIVITY</p><p id="activity" role="status">Waiting for a connection</p></div>
+      <div class="footer"><span class="local-dot"></span><p>Local connection · 127.0.0.1:43120</p></div>
+      <p class="version">Bridge 0.1.0 · Photoshop 25+</p>
+    </div>
+    <script src="index.js"></script>
+  </body>
+</html>

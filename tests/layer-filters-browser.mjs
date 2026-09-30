@@ -1,0 +1,118 @@
+import { chromium, expect } from '@playwright/test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import sharp from 'sharp';
+import { createCompanion } from '../server/index.mjs';
+
+const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'prism-layer-filters-ui-'));
+const artifacts = path.resolve('test-results'); await fs.mkdir(artifacts, { recursive: true });
+let keyReads = 0, providerCalls = 0;
+const companion = await createCompanion({ dataDir, port: 0, getImageKey: async () => { keyReads++; return null; }, imageProvider: async () => { providerCalls++; throw Error('Filters must not generate images.'); } });
+const width = 96, height = 72, raw = Buffer.alloc(width * height * 4);
+for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) raw.set([40 + x % 100, 50 + y * 2, (x + y) % 2 ? 80 : 140, (x + y) % 9 === 0 ? 1 : (x + y) % 7 === 0 ? 128 : 255], (y * width + x) * 4);
+const source = await sharp(raw, { raw: { width, height, channels: 4 } }).png().toBuffer();
+let document = (await companion.native.execute('import_image', { name: 'Editable filter fixture', data: source.toString('base64'), mimeType: 'image/png' })).document;
+const documentId = document.id, layerId = document.layers[0].id;
+document = (await companion.native.execute('select_region', { documentId, shape: 'rectangle', x: 0, y: 0, width: 12, height: 12 })).document;
+const sourceName = document.layers[0].sourceAsset, selection = structuredClone(document.selection);
+const current = async () => (await companion.native.execute('get_document', { documentId })).document;
+const layer = async () => (await current()).layers.find(item => item.id === layerId);
+const pixels = async () => sharp(Buffer.from((await companion.native.execute('get_layer_preview', { documentId, layerId, view: 'layer', maxWidth: width })).data, 'base64')).ensureAlpha().raw().toBuffer();
+const baseline = await pixels();
+const baseUrl = `http://127.0.0.1:${await companion.listen()}`;
+const browser = await chromium.launch({ headless: true, channel: 'chrome' });
+const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, reducedMotion: 'reduce' }); page.setDefaultTimeout(12000);
+const errors = [], checkpoints = [], requests = [];
+page.on('pageerror', error => errors.push(error.message)); page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+page.on('request', request => { if (request.method() === 'POST' && request.url().endsWith('/api/command')) requests.push(request.postDataJSON()); });
+await page.route('https://**', route => route.abort());
+const panel = page.getByRole('region', { name: 'Layer filters', exact: true });
+const settled = async () => { await expect(page.locator('.save-status .spin')).toHaveCount(0); };
+async function mutate(action) { await settled(); const revision = (await current()).revision; await action(); await expect.poll(async () => (await current()).revision).toBeGreaterThan(revision); await settled(); return current(); }
+const undo = () => mutate(() => page.getByRole('button', { name: 'Undo (⌘Z)', exact: true }).click());
+async function add(kind, value) {
+  await panel.getByRole('button', { name: 'New filter', exact: true }).click();
+  await panel.getByLabel('New layer filter kind').selectOption(kind);
+  if (value !== undefined) await panel.getByLabel('Layer filter value', { exact: true }).fill(String(value));
+  return mutate(() => panel.getByRole('button', { name: 'Add layer filter', exact: true }).click());
+}
+function checkpoint(message) { checkpoints.push(message); console.log(`Verified: ${message}`); }
+try {
+  await page.goto(baseUrl, { waitUntil: 'networkidle' }); await expect(page.locator('.artboard img')).toBeVisible(); await page.locator('.inspector-tabs').getByRole('button', { name: 'Layers', exact: true }).click();
+  await expect(panel).toBeVisible();
+  assert.equal(await panel.getByLabel('New layer filter kind').locator('option').count(), 32);
+  assert.equal(await panel.getByLabel('New layer filter kind').locator('option[value=blur],option[value=sharpen]').count(), 2);
+  await expect(panel).toContainText('Capture selections explicitly in Filter effect mask');
+  await add('brightness', 30);
+  let stack = (await layer()).filters; const brightnessId = stack[0].id;
+  const changed = await pixels(); assert.notDeepEqual(changed, baseline);
+  const outside = (40 * width + 40) * 4; assert.notDeepEqual(changed.subarray(outside, outside + 3), baseline.subarray(outside, outside + 3));
+  assert.deepEqual((await current()).selection, selection);
+  for (let i = 3; i < baseline.length; i += 4) assert.equal(changed[i], baseline[i], `alpha ${i}`);
+  const beforeDraft = (await current()).revision;
+  await panel.getByLabel('Layer filter value', { exact: true }).fill('12'); await panel.getByLabel('Layer filter opacity').fill('45');
+  assert.equal((await current()).revision, beforeDraft, 'Draft edits must not create history');
+  await mutate(() => panel.getByRole('button', { name: 'Apply filter changes' }).click());
+  assert.deepEqual((await layer()).filters.map(({ id, value, opacity }) => ({ id, value, opacity })), [{ id: brightnessId, value: 12, opacity: .45 }]);
+  await mutate(() => panel.getByLabel('Enable filter 1 Brightness').click()); assert.deepEqual(await pixels(), baseline);
+  await mutate(() => panel.getByLabel('Enable filter 1 Brightness').click());
+  await add('invert', 100); const orderedPixels = await pixels(); const ordered = structuredClone((await layer()).filters);
+  await mutate(() => panel.getByRole('button', { name: 'Move filter 2 earlier', exact: true }).click());
+  assert.deepEqual((await layer()).filters.map(item => item.kind), ['invert', 'brightness']); assert.notDeepEqual(await pixels(), orderedPixels);
+  await undo(); assert.deepEqual((await layer()).filters, ordered); assert.deepEqual(await pixels(), orderedPixels);
+  checkpoint('32 truthful kinds; explicit value/opacity application; ignored selection, exact alpha, enable bypass and pixel-sensitive execution order with undo');
+
+  await add('levels'); await panel.getByLabel('Midtone gamma').fill('1.4');
+  await mutate(() => panel.getByRole('button', { name: 'Apply filter changes' }).click());
+  const levelsId = (await layer()).filters.at(-1).id;
+  assert.equal((await layer()).filters.at(-1).parameters.gamma, 1.4);
+  await add('curves'); await panel.getByLabel('Curve channel').selectOption('red'); await panel.getByLabel('Curve point output').fill('24');
+  await mutate(() => panel.getByRole('button', { name: 'Apply filter changes' }).click());
+  assert.equal((await layer()).filters.length, 4); assert.equal((await layer()).filters[2].id, levelsId); assert.equal((await layer()).filters.at(-1).parameters.channel, 'red'); assert.equal((await layer()).filters.at(-1).parameters.points[0].y, 24);
+  await panel.getByRole('button', { name: 'New filter', exact: true }).click(); await panel.getByLabel('New layer filter kind').selectOption('median');
+  await panel.getByLabel('Layer filter value', { exact: true }).fill('2'); await expect(panel.getByRole('button', { name: 'Add layer filter' })).toBeDisabled();
+  await panel.getByLabel('Layer filter value', { exact: true }).fill('3'); await mutate(() => panel.getByRole('button', { name: 'Add layer filter' }).click());
+  await add('threshold', 0); assert.equal((await layer()).filters.at(-1).value, 0);
+  const savedStack = structuredClone((await layer()).filters);
+  await mutate(() => panel.getByRole('button', { name: 'Delete filter 6 Threshold' }).click()); assert.equal((await layer()).filters.length, 5); await undo();
+  await mutate(() => panel.getByRole('button', { name: 'Clear filters', exact: true }).click()); assert.equal((await layer()).filters?.length || 0, 0); assert.deepEqual(await pixels(), baseline); await undo(); assert.deepEqual((await layer()).filters, savedStack);
+  checkpoint('editable levels and curves retain IDs, odd median validation, threshold zero, delete/clear and exact undo');
+
+  await expect(page.getByLabel('Protect original pixels', { exact: true })).toBeDisabled();
+  for (const checkbox of await panel.locator('.filter-enabled input').all()) await mutate(() => checkbox.click());
+  assert.deepEqual(await pixels(), baseline);
+  await mutate(() => page.getByLabel('Protect original pixels', { exact: true }).click());
+  for (const checkbox of await panel.locator('.filter-enabled input').all()) await expect(checkbox).toBeDisabled();
+  await expect(panel.getByRole('button', { name: 'Clear filters', exact: true })).toBeDisabled(); await expect(panel.getByRole('button', { name: 'New filter', exact: true })).toBeDisabled();
+  await mutate(() => page.getByLabel('Protect original pixels', { exact: true }).click());
+  await page.getByRole('button', { name: 'Brush (B)', exact: true }).click();
+  await expect(page.locator('.brush-options')).toContainText('Review Bake or Clear in Layers');
+  const beforeStroke = (await current()).revision, requestCount = requests.length;
+  const artboard = await page.locator('.artboard').boundingBox(); await page.mouse.move(artboard.x + 30, artboard.y + 30); await page.mouse.down(); await page.mouse.move(artboard.x + 70, artboard.y + 40); await page.mouse.up();
+  await expect(page.getByRole('alert')).toContainText('Review Bake filters or Clear filters in Layers'); assert.equal((await current()).revision, beforeStroke); assert.equal(requests.length, requestCount);
+  await page.getByRole('button', { name: 'Dismiss notification' }).click();
+  await mutate(() => page.getByRole('button', { name: 'Mask from selection', exact: true }).click());
+  assert.ok((await layer()).mask); assert.equal((await layer()).filters.length, 6); await undo();
+  checkpoint('active filters block protection; protected stacks disable all edits; disabled stacks block painting before HTTP; ordinary layer masks stay editable');
+
+  await panel.getByRole('button', { name: 'Edit filter 4 Curves' }).click();
+  await mutate(() => panel.getByLabel('Enable filter 4 Curves').click());
+  const finalFilters = structuredClone((await layer()).filters), finalPixels = await pixels();
+  await page.reload({ waitUntil: 'networkidle' }); await expect(page.locator('.artboard img')).toBeVisible(); await page.locator('.inspector-tabs').getByRole('button', { name: 'Layers', exact: true }).click(); assert.deepEqual((await layer()).filters, finalFilters); assert.deepEqual(await pixels(), finalPixels);
+  await page.getByLabel('Layer name').fill('Filter source'); await page.getByLabel('Layer name').press('Enter'); await settled();
+  await mutate(() => page.getByRole('button', { name: 'Duplicate selected layer' }).click());
+  const duplicated = (await current()).layers.at(-1); assert.notEqual(duplicated.id, layerId); assert.deepEqual(duplicated.filters, finalFilters);
+  await undo();
+  await page.setViewportSize({ width: 900, height: 900 });
+  await panel.getByRole('button', { name: 'Edit filter 4 Curves' }).click(); await panel.locator('.curve-editor').scrollIntoViewIfNeeded();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await page.screenshot({ path: path.join(artifacts, 'editable-layer-filters.png'), animations: 'disabled' });
+  assert.deepEqual(await fs.readFile(path.join(companion.native.assetsDir, sourceName)), source);
+  const original = await companion.native.execute('get_layer_preview', { documentId, layerId, view: 'source', maxWidth: width });
+  assert.deepEqual(await sharp(Buffer.from(original.data, 'base64')).ensureAlpha().raw().toBuffer(), raw);
+  assert.equal(keyReads, 0); assert.equal(providerCalls, 0); assert.deepEqual(errors, []);
+  checkpoint('reopened filters and pixels, independent duplicate, exact original source bytes/view, compact layout and zero provider/key/browser errors');
+  console.log(`Layer filter browser workflow passed: ${checkpoints.length} checkpoints.`);
+} catch (error) { await page.screenshot({ path: path.join(artifacts, 'layer-filters-failure.png'), animations: 'disabled' }).catch(() => {}); console.error('Last request:', requests.at(-1)); console.error('Visible alerts:', await page.getByRole('alert').allTextContents().catch(() => [])); throw error; } finally { await browser.close(); await companion.close(); await fs.rm(dataDir, { recursive: true, force: true }); }

@@ -1,0 +1,13 @@
+# Independently authored Prism fixture: identity
+TITLE "Prism authored identity"
+LUT_3D_SIZE 2
+DOMAIN_MIN 0 0 0
+DOMAIN_MAX 1 1 1
+0 0 0
+1 0 0
+0 1 0
+1 1 0
+0 0 1
+1 0 1
+0 1 1
+1 1 1

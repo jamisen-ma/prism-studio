@@ -1,0 +1,20 @@
+@font-face{font-family:'Prism Fraunces';src:url('../assets/fonts/Fraunces.ttf') format('truetype');font-style:normal;font-weight:100 900}
+@font-face{font-family:'Prism Fraunces';src:url('../assets/fonts/Fraunces-Italic.ttf') format('truetype');font-style:italic;font-weight:100 900}
+.canvas-text{position:absolute;z-index:6;cursor:text}
+.canvas-text.box{outline:1px dashed var(--accent);outline-offset:0;box-shadow:0 0 0 1px rgba(0,0,0,.45)}
+.canvas-text textarea{display:block;margin:0;padding:0;border:0;border-radius:0;background:transparent;resize:none;overflow:hidden;white-space:pre;caret-color:var(--accent);user-select:text}
+.canvas-text.box textarea{width:100%;white-space:pre-wrap;overflow-wrap:anywhere}
+.canvas-text.point textarea{outline:1px dashed var(--accent);box-shadow:0 0 0 1px rgba(0,0,0,.45);min-height:1em}
+.canvas-text textarea:focus-visible{outline:1px dashed var(--accent)}
+.canvas-text textarea::placeholder{color:currentColor;opacity:.45}
+.canvas-text-draft{position:absolute;z-index:5;pointer-events:none;outline:1px dashed var(--accent);box-shadow:0 0 0 1px rgba(0,0,0,.45)}
+.canvas-text-bar{position:absolute;bottom:calc(100% + 8px);left:0;display:flex;align-items:center;gap:4px;padding:4px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.4);white-space:nowrap;cursor:default;font-size:12px}
+.canvas-text-bar select,.canvas-text-bar input[type=number]{height:26px;background:var(--panel-deep);border:1px solid var(--line);border-radius:5px;padding:0 6px}
+.canvas-text-bar input[type=number]{width:56px}
+.canvas-text-bar input[type=color]{width:28px;height:26px;padding:2px;background:var(--panel-deep);border:1px solid var(--line);border-radius:5px}
+.canvas-text-bar button{display:grid;place-items:center;width:26px;height:26px;border-radius:5px;color:var(--soft)}
+.canvas-text-bar button:not(:disabled):hover{background:var(--accent-bg)}
+.canvas-text-bar button[aria-pressed=true]{background:var(--accent-bg);color:var(--accent)}
+.canvas-text-bar button.commit{color:var(--accent)}
+.canvas-text-divider{width:1px;height:18px;background:var(--line);margin:0 2px}
+.canvas-text.editing textarea{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}

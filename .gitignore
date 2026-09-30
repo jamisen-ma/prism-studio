@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.prism/
+test-results/
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example

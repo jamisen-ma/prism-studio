@@ -1,0 +1,19 @@
+# Additional layer-mask density independent audit
+
+Verified on 2026-09-19. `tests/mask-density-audit.test.mjs` passes nine independent tests using local synthetic images and a stub segmentation result. The combined run with eleven backend-owner tests, shared schema and the official MCP workflow passes **22/22**. No provider, credential or external model calls are required.
+
+The tests verify the declared layer-only contract:
+
+- A separate geometric/bitmap reference checks density after inward feather, inversion and the persisted canvas clip. Density one matches legacy output byte-for-byte; density zero matches removing only the additional mask. Raw descriptors remain unchanged.
+- Brush replacement, subtraction and mask morphology operate on raw-mask coverage while retaining density. Feather/invert edits and the compatible empty refinement preserve it. Explicit descriptor replacement, selection-to-mask and adjustment-mask replacement reset it; removing a mask removes its scalar.
+- Original source files, source-alpha assets and their respective previews remain exact. Undo/redo, independent duplication, extraction, rasterization and portable roundtrips retain authored density. Same-size placement bakes effective own coverage once into its new alpha, without retaining a second additional mask. Source-oriented subject selection sees effective density; source paint/fill preserve the additional mask separately.
+- Six nested pass-through/isolated clipping fixtures compare every RGBA pixel with independent premultiplied arithmetic. Content, member, base and ancestor coverage apply at their established stages without thickening soft base alpha.
+- Density zero matches mask removal for outside outline/shadow rendering. Changing a protected leaf's density stays bounded by its ancestor mask; disabling that ancestor mask expands the protected footprint to include alpha-one and soft source pixels. Generated previews, current generation snapshots and explicit installation of an older saved result honor the enlarged footprint. The saved selection remains unchanged.
+- All nine canvas anchors, with geometric and bitmap masks, pass expansion, crop and image-resize checks. Raw masks match a no-density control transformed through the same operations; the scalar stays separate. Disabling the result matches removal even outside old mask clips.
+- An independent PSD byte walker checks the effective alpha8 mask channel: binary masks at density `128/255` export exact 127/255 coverage; density zero exports full coverage. Half density and nonrepresentable partially gray combinations refuse export. PSD inspection/export leave native files, cache and graph unchanged.
+- Invalid values, stale revisions, a failed transaction and a real filesystem save failure preserve published metadata, history, assets and warm cached previews. Zero-density masked groups still reserve the normal scratch budget.
+- Twelve canonical hostile portable manifests reject before image processing or writes, including orphaned density, malformed disabled masks and density fields misplaced inside raw masks, saved selections and internal clips.
+
+The review also found a pre-existing isolated-preview mismatch: ordinary generated layers could omit lower protected footprints that the full composite applied. The backend fix now reads the original protection context for generated/style previews; the regression above verifies the corrected generated-layer alpha.
+
+This remains an additional document-space layer-mask control. Source cutout alpha, active/saved selections, hard generation masks and style presets do not gain density. Existing conservative arrangement, snapping, placement and group-scratch restrictions continue treating a stored mask as present even at density zero. PSD exports materialize coverage rather than retaining a separate editable density property.

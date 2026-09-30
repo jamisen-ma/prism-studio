@@ -1,0 +1,61 @@
+{
+  "status": "All 2048 positive midpoint quantile integers certified by outward Decimal CDF intervals",
+  "bins": 4096,
+  "scale": 8192,
+  "positiveHalfBytes": 4096,
+  "sha256LittleEndianInt16Positive": "317cfb8ef5c5cb825f7f0530359f16c72bb981d69be1c4e7e0119d728ba15ea3",
+  "firstValues": [
+    3,
+    8,
+    13,
+    18,
+    23,
+    28,
+    33,
+    38
+  ],
+  "lastValues": [
+    23805,
+    24170,
+    24589,
+    25085,
+    25695,
+    26493,
+    27666,
+    30051
+  ],
+  "minCdfBoundaryMarginLowerBound": "1.13846465390354360186877573706803407410480778693705555369907407182492645E-9",
+  "minScaledQuantileHalfBoundaryDistanceLowerBound": "0.0000233157561119445729662725270951533378376664634764708977397570369909744936960",
+  "maxCdfIntervalWidth": "4.927E-77",
+  "piInterval": [
+    "3.1415926535897932384626433832795028841971693993751058209749445923078164062861963",
+    "3.1415926535897932384626433832795028841971693993751058209749445923078164062862220"
+  ],
+  "normalizationInterval": [
+    "0.39894228040143267793994605993438186847585863116493465766592582967065792589930099",
+    "0.39894228040143267793994605993438186847585863116493465766592582967065792589930267"
+  ],
+  "meanExact": 0,
+  "variance": 0.9996779785287799,
+  "fourthMoment": 2.989550502508019,
+  "excessKurtosis": -0.00852316816061105,
+  "maxAbsolute": 3.6683349609375,
+  "sizeComparison": [
+    {
+      "bins": 4096,
+      "scale": 8192,
+      "positiveHalfBytes": 4096,
+      "maxAbsolute": 3.6683349609375,
+      "variance": 0.9996779785287799,
+      "note": "4096 table interval-certified; 65536 comparison uses float proposals only"
+    },
+    {
+      "bins": 65536,
+      "scale": 4096,
+      "positiveHalfBytes": 65536,
+      "maxAbsolute": 4.324951171875,
+      "variance": 0.999978917730914,
+      "note": "4096 table interval-certified; 65536 comparison uses float proposals only"
+    }
+  ]
+}

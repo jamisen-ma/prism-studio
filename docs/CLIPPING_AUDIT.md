@@ -1,0 +1,19 @@
+# Clipping-chain independent audit
+
+Verified on 2026-09-19 against the native implementation. `tests/clipping-audit.test.mjs` passes eight independent tests; a combined run with the ten backend-owner tests and the official MCP integration test passes **19/19**. These are local synthetic fixtures, with no provider, credential or model calls.
+
+The independent checks cover:
+
+- Thirty-two native pixel fixtures compare every RGBA channel against a separate color/compositing reference. Normal, Multiply, Screen and Dissolve include partial member opacity, alpha 0/1/128/254/255, bitmap member masks and a fractional feathered, inverted, clipped geometric base mask. The spatial Dissolve oracle uses separate BigInt integer arithmetic. Base alpha and mask apply once, rather than progressively thickening soft edges.
+- Twelve additional references cover nested pass-through and isolated groups, group blend modes, staged opacity and soft group masks. The completed clipping chain enters each existing group stage once.
+- Hidden and zero-opacity bases consume the complete member run. Hidden participants can be inspected without changing document visibility. Original source image bytes, hidden RGB in the owned interior, active selections, revisions and reopening remain intact.
+- Base and member previews retain the original sibling/protection context. Lower protected footprints suppress upper contribution and restore unfiltered RGB, including generated members and isolated ancestors. Member and base Dissolve decisions occur before their contribution coverages are multiplied. Generation snapshots contain the same rendered image.
+- Base outline, shadow and glow remain outside its nonzero source alpha and keep the same appearance when a member changes interior color. A saved style cannot enable decorations on an upper member. Explicit zero-opacity effects and zero-width outlines remain harmless metadata.
+- Invalid partial structural edits, participant extraction/placement/arrangement, protected members, enabled member styles, stale revisions, failed transactions and a real filesystem save failure leave the published graph, history, source files, project bytes and warm preview cache unchanged. Rejection fixtures count source-processing calls, rather than accepting a spy's exception as proof of early rejection.
+- Rasterizing a base or member retains the relationship. Whole containing-group duplication assigns fresh IDs and remaps the copied members to their copied base.
+- Eleven canonical, hash-valid hostile portable manifests reject before image validation or asset writes: missing/self/cyclic references, wrong reference types, hidden/transparent protected participants, generated bases, enabled member effects, gaps and cross-parent links.
+- Hidden chains consume the declared conservative five bytes per canvas pixel alongside group and filter scratch. Metadata-only tests accept 240 MB of group/chain retention and 224 MB of chain/filter accounting, and reject 320 MB and 304 MB combinations without allocating images. This verifies the declared scratch accounting, not a whole-process RSS bound.
+
+The source review identified one client interaction to guard: a clipped member's visible preview bounds need not translate rigidly with its source. The client now disables guide snapping for all clipping-chain participants while retaining Free Move. `tests/guides-snapping-audit.test.mjs` covers both base and member eligibility, and its six tests pass against the transpiled production client helpers.
+
+The supported contract remains deliberately bounded: unprotected consecutive content siblings, grouped-base blending, base-only outside styles, explicit release before partial structural operations, and strict PSD refusal. This audit does not claim Adobe clipping parity, clipped adjustment/group support, or unrestricted large-document performance. Browser verification is tracked separately by the UI owner.

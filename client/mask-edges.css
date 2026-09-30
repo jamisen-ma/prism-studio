@@ -1,0 +1,8 @@
+.mask-edges{border-top:1px solid var(--line);margin:17px 0;padding-top:15px}
+.mask-edges>.section-heading{font-size:10px;margin-bottom:11px}
+.mask-edge-inputs{display:grid;grid-template-columns:minmax(0,1fr) 70px;gap:8px}
+.mask-edge-inputs .field-label{font-size:9px;margin:0;gap:6px}
+.mask-edge-inputs .field-label>input,.mask-edge-inputs .field-label>select{font-size:10px;padding:7px;min-width:0;width:100%}
+.mask-edges .property-hint{font-size:9px;line-height:1.65;margin:9px 0}
+.mask-edges .button{font-size:9px;padding:8px}
+.mask-edges .mask-edge-disclosure{font-size:8px;color:var(--muted);margin-bottom:0}

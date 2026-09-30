@@ -1,0 +1,13 @@
+/* Photoshop-style foreground/background swatch pair with swap (X) and default (D) controls. */
+.color-swatches{width:40px;height:40px}
+.color-swatches>input{position:absolute;width:24px;height:24px;padding:2px;border:1px solid #625a6c;border-radius:4px;background:#252128;cursor:pointer}
+.color-swatches>input:first-child{left:0;top:0;z-index:2}
+.color-swatches>input:nth-child(2){left:auto;top:auto;right:0;bottom:0;z-index:1}
+.color-swatches>input:focus-visible{outline:1px solid #cfb7fb;outline-offset:1px}
+.color-swatches>.swatch-swap{position:absolute;right:0;top:0;width:14px;height:14px;padding:0;font-size:11px;line-height:12px;color:#a59bb0;display:flex;align-items:center;justify-content:center}
+.color-swatches>.swatch-reset{position:absolute;left:0;bottom:0;width:14px;height:14px;padding:0}
+.color-swatches>.swatch-reset>i{position:absolute;width:7px;height:7px;border:1px solid #8b8395}
+.color-swatches>.swatch-reset>i:first-child{left:1px;top:1px;background:#000;z-index:1}
+.color-swatches>.swatch-reset>i:last-child{left:5px;top:5px;background:#fff}
+.color-swatches>button:hover{color:#e2d4f5}
+.color-swatches>.swatch-reset:hover>i{border-color:#cfb7fb}
