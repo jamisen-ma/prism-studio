@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { commandSchemas, validateCommand, validateBackendOptions, validateEditRecipeDefinition } from '../shared/commands.mjs';
+import { commandSchemas, validateCommand, validateEditRecipeDefinition } from '../shared/commands.mjs';
 
 const ranges = ['reds','yellows','greens','cyans','blues','magentas','whites','neutrals','blacks'];
 const base = { documentId: 'doc', layerId: 'layer' }, invalid = { code: 'INVALID_ARGUMENTS' };
@@ -29,7 +29,7 @@ test('Selective Color rejects coercion, partial rows, holes, foreign fields and 
   for (const parameters of [null, { method: 'absolute', preserveLuminosity: true }, { reds: [0,0,0,0], tint: false }, { reds: [0,0,0,0], unknown: 1 }]) assert.throws(() => call(parameters), invalid);
 });
 
-test('Selective partial updates stay sparse and detached and semantic fields refuse the Photoshop bridge recursively', () => {
+test('Selective partial updates stay sparse and detached and semantic fields survive transactions', () => {
   for (const command of ['update_adjustment','update_layer_filter']) {
     const identity = { ...base, ...(command === 'update_layer_filter' ? { filterId: 'filter' } : {}) };
     for (const parameters of [{}, { method: 'relative' }, ...ranges.map(range => ({ [range]: [.01,12.5,-100,100] }))]) {
@@ -37,15 +37,12 @@ test('Selective partial updates stay sparse and detached and semantic fields ref
       for (const range of ranges) if (parameters[range]) parameters[range][0] = 99;
       assert.deepEqual(parsed.parameters, expected); assert.equal(parsed.value, undefined);
       if (Object.keys(expected).length) {
-        assert.doesNotThrow(() => validateBackendOptions('native', command, { ...identity, parameters: expected }));
-        assert.throws(() => validateBackendOptions('photoshop', command, { ...identity, parameters: expected }), { code: 'UNSUPPORTED_COMMAND' });
         const args = { layerId: 'layer', ...(command === 'update_layer_filter' ? { filterId: 'filter' } : {}), parameters: expected };
         const transaction = validateCommand('apply_transaction', { documentId: 'doc', label: 'Selective', operations: [{ command, args }] });
-        assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', transaction), { code: 'UNSUPPORTED_COMMAND' });
+        assert.deepEqual(transaction.operations[0].args.parameters, expected);
       }
     }
   }
-  assert.throws(() => validateBackendOptions('photoshop', 'add_adjustment', { kind: 'selective_color', value: 0 }), { code: 'UNSUPPORTED_COMMAND' });
 });
 
 test('typed Selective recipes preserve sparse fields while constraining source and adjustment slots to the correct family', () => {

@@ -92,8 +92,8 @@ test('unauthenticated, token-less and cross-origin API requests are rejected', a
   assert.equal(rebound, 403);
   assert.equal((await user.request('GET', '/api/status')).status, 200);
   assert.equal((await user.request('GET', '/api/setup')).status, 404, 'No pairing key or local MCP setup is exposed.');
-  const photoshop = await user.command('list_documents', {}, 'photoshop');
-  assert.equal(photoshop.status, 400); assert.equal(photoshop.data.error.code, 'UNSUPPORTED_COMMAND');
+  const otherBackend = await user.command('list_documents', {}, 'photoshop');
+  assert.equal(otherBackend.status, 400); assert.equal(otherBackend.data.error.code, 'INVALID_ARGUMENTS');
   const tool = await user.request('GET', '/api/chat/00000000-0000-4000-8000-000000000000/tools', { headers: { Authorization: `Bearer ${'a'.repeat(64)}` } });
   assert.equal(tool.status, 401, 'Chat tool capabilities require an active turn.');
 });

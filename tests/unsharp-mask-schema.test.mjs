@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { commandSchemas, validateCommand, validateBackendOptions, validateEditRecipeDefinition } from '../shared/commands.mjs';
+import { commandSchemas, validateCommand, validateEditRecipeDefinition } from '../shared/commands.mjs';
 
 const base = { documentId: 'document', layerId: 'photo', expectedRevision: 2 };
 const add = parameters => ({ ...base, kind: 'unsharp_mask', value: 0, ...(parameters === undefined ? {} : { parameters }) });
@@ -44,6 +44,4 @@ test('Unsharp Mask participates only in raster recipe slots and native transacti
   for (const kind of ['sharpen', 'unsharp_mask']) assert.throws(() => validateEditRecipeDefinition({ ...recipe, slots: [{ key: 'photo', type: 'adjustment', kind }], steps: [{ command: 'update_adjustment', target: 'photo', args: { value: 0, parameters: { amount: 100 } } }] }), { code: 'INVALID_ARGUMENTS' });
   assert.throws(() => validateEditRecipeDefinition({ ...recipe, steps: [{ ...recipe.steps[0], args: { ...recipe.steps[0].args, parameters: { amount: .001 } } }] }), { code: 'INVALID_ARGUMENTS' });
   const transaction = validateCommand('apply_transaction', { documentId: base.documentId, label: recipe.name, operations: [{ command: 'add_layer_filter', args: { layerId: base.layerId, ...recipe.steps[0].args } }] });
-  assert.doesNotThrow(() => validateBackendOptions('native', 'apply_transaction', transaction));
-  assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', transaction), { code: 'UNSUPPORTED_COMMAND' });
 });

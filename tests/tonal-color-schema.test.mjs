@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateCommand, validateBackendOptions, validateEditRecipeDefinition } from '../shared/commands.mjs';
+import { validateCommand, validateEditRecipeDefinition } from '../shared/commands.mjs';
 
 const base = { documentId: 'document', layerId: 'layer' };
 const controls = { color_balance: { shadows: [-100, 0.01, 100], preserveLuminosity: false }, black_white: { reds: -200, magentas: 300, tint: false, tintColor: '#AABbCC', tintAmount: 17.25 } };
@@ -48,9 +48,6 @@ test('new tonal kinds pass typed recipe checks and stay native-only in ordinary 
   for (const kind of ['color_balance', 'black_white']) {
     const args = { kind, value: 0, parameters: controls[kind] };
     const transaction = validateCommand('apply_transaction', { documentId: base.documentId, label: 'Tonal grade', operations: [{ command: 'add_adjustment', args }] });
-    assert.doesNotThrow(() => validateBackendOptions('native', 'apply_transaction', transaction));
-    assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', transaction), { code: 'UNSUPPORTED_COMMAND' });
-    assert.throws(() => validateBackendOptions('photoshop', 'add_adjustment', { kind, value: 0 }), { code: 'UNSUPPORTED_COMMAND' });
     const recipe = { name: 'Tonal treatment', slots: [{ key: 'photo', type: 'raster' }, { key: 'grade', type: 'adjustment', kind }], steps: [
       { command: 'add_layer_filter', target: 'photo', args },
       { command: 'update_adjustment', target: 'grade', args: { value: 0, parameters: controls[kind] } },

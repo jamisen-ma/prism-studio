@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { commandSchemas, validateCommand, validateBackendOptions, validateEditRecipeDefinition, readCommands, transactionCommands } from '../shared/commands.mjs';
+import { commandSchemas, validateCommand, validateEditRecipeDefinition, readCommands, transactionCommands } from '../shared/commands.mjs';
 
 const base = { documentId: 'document', layerId: 'photo', expectedRevision: 2 };
 const mutations = ['set_layer_filter_mask', 'modify_layer_filter_mask', 'clear_layer_filter_mask'];
@@ -37,7 +37,6 @@ test('filter-mask updates preserve sparse exact settings and all mutations pin p
     const fields = command === 'set_layer_filter_mask' ? { source: 'all' } : command === 'modify_layer_filter_mask' ? { enabled: false } : {};
     for (const expectedRevision of [undefined, null, 0, -1, .5, '2']) assert.throws(() => validateCommand(command, { ...base, ...fields, expectedRevision }), { code: 'INVALID_ARGUMENTS' });
     assert.equal(readCommands.has(command), false); assert.equal(transactionCommands.has(command), true);
-    assert.throws(() => validateBackendOptions('photoshop', command, { ...base, ...fields }), { code: 'UNSUPPORTED_COMMAND' });
     const operations = [{ command, args: { layerId: base.layerId, ...fields } }];
     const transaction = { documentId: base.documentId, expectedRevision: 2, label: 'Mask change', operations };
     assert.deepEqual(validateCommand('apply_transaction', transaction).operations, operations);

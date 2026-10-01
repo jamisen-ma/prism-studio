@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validateCommand,validateBackendOptions,readCommands,transactionCommands} from '../shared/commands.mjs';
+import {validateCommand,readCommands,transactionCommands} from '../shared/commands.mjs';
 
 const base={documentId:'example-document'};
 test('professional color settings enforce kind-specific ranges and valid transfer curves',()=>{
@@ -41,14 +41,6 @@ test('new mutation commands can be grouped while histogram remains read only',()
   assert.equal(result.operations.length,3);assert.ok(transactionCommands.has('update_text'));assert.ok(readCommands.has('get_histogram'));
   assert.throws(()=>validateCommand('apply_transaction',{...base,label:'No reads',operations:[{command:'get_histogram',args:{}}]}),{code:'INVALID_TRANSACTION'});
 });
-test('Photoshop options reject native-only masks and typography rather than silently changing meaning',()=>{
-  const ellipse={...base,kind:'exposure',value:1,mask:{shape:'ellipse',x:0,y:0,width:100,height:100}};
-  assert.throws(()=>validateBackendOptions('photoshop','add_adjustment',ellipse),{code:'UNSUPPORTED_COMMAND'});
-  assert.doesNotThrow(()=>validateBackendOptions('native','add_adjustment',ellipse));
-  assert.throws(()=>validateBackendOptions('photoshop','add_text',{fontFamily:'serif'}),{code:'UNSUPPORTED_COMMAND'});
-  assert.throws(()=>validateBackendOptions('photoshop','apply_transaction',{operations:[{command:'add_adjustment',args:ellipse}]}),{code:'UNSUPPORTED_COMMAND'});
-});
-
 test('editable layer filters have strict bounded contracts, transactions and explicit native-only scope',()=>{
   const args={...base,layerId:'raster',kind:'median',value:3};
   assert.equal(validateCommand('add_layer_filter',args).value,3);
@@ -64,10 +56,8 @@ test('editable layer filters have strict bounded contracts, transactions and exp
   assert.throws(()=>validateCommand('reorder_layer_filter',{...update,index:8}),{code:'INVALID_ARGUMENTS'});
   const operations=[{command:'add_layer_filter',args:{layerId:'raster',kind:'brightness',value:12}},{command:'clear_layer_filters',args:{layerId:'raster'}}];
   assert.equal(validateCommand('apply_transaction',{...base,label:'Filter changes',operations}).operations.length,2);
-  assert.throws(()=>validateBackendOptions('photoshop','apply_transaction',{operations}),{code:'UNSUPPORTED_COMMAND'});
   for(const command of ['add_layer_filter','update_layer_filter','reorder_layer_filter','delete_layer_filter','clear_layer_filters']) {
     assert.ok(transactionCommands.has(command));assert.equal(readCommands.has(command),false);
-    assert.throws(()=>validateBackendOptions('photoshop',command,{}),{code:'UNSUPPORTED_COMMAND'});
   }
 });
 
@@ -77,7 +67,6 @@ test('mask morphology requires explicit operation, bounded whole-pixel radius an
     assert.equal(validateCommand(command,args).radius,1);
     for(const invalid of [{radius:0},{radius:101},{radius:1.5},{operation:'feather'},{kernel:'disk'}]) assert.throws(()=>validateCommand(command,{...args,...invalid}),{code:'INVALID_ARGUMENTS'});
     assert.ok(transactionCommands.has(command));
-    assert.throws(()=>validateBackendOptions('photoshop',command,args),{code:'UNSUPPORTED_COMMAND'});
   }
   assert.throws(()=>validateCommand('morph_layer_mask',{...base,operation:'border',radius:4}),{code:'INVALID_ARGUMENTS'});
 });
@@ -88,14 +77,12 @@ test('reusable style commands have bounded unique targets, strict capture fields
     assert.doesNotThrow(()=>validateCommand(command,{...base,...fields}));
     assert.ok(transactionCommands.has(command));assert.equal(readCommands.has(command),false);
     assert.throws(()=>validateCommand(command,{...base,...fields,unknown:true}),{code:'INVALID_ARGUMENTS'});
-    assert.throws(()=>validateBackendOptions('photoshop',command,fields),{code:'UNSUPPORTED_COMMAND'});
   }
   for(const layerIds of [[],['same','same'],Array.from({length:65},(_,i)=>String(i))]) assert.throws(()=>validateCommand('apply_layer_style',{...base,styleId:'preset',layerIds}),{code:'INVALID_ARGUMENTS'});
   assert.throws(()=>validateCommand('save_layer_style',{...base,layerId:'source',effects:{glow:{blur:3}}}),{code:'INVALID_ARGUMENTS'});
   assert.throws(()=>validateCommand('rename_layer_style',{...base,styleId:'preset',name:' '}),{code:'INVALID_ARGUMENTS'});
   const operations=Object.entries(examples).map(([command,args])=>({command,args}));
   assert.equal(validateCommand('apply_transaction',{...base,label:'Style workflow',operations}).operations.length,4);
-  assert.throws(()=>validateBackendOptions('photoshop','apply_transaction',{operations}),{code:'UNSUPPORTED_COMMAND'});
 });
 
 test('group isolation explicitly separates pass-through and isolated blend semantics',()=>{
@@ -106,7 +93,6 @@ test('group isolation explicitly separates pass-through and isolated blend seman
   assert.ok(transactionCommands.has('set_group_compositing'));assert.equal(readCommands.has('set_group_compositing'),false);
   const operations=[{command:'set_group_compositing',args:{layerId:'group',mode:'isolated',blendMode:'screen'}}];
   assert.equal(validateCommand('apply_transaction',{...base,label:'Isolate group',operations}).operations.length,1);
-  assert.throws(()=>validateBackendOptions('photoshop','apply_transaction',{operations}),{code:'UNSUPPORTED_COMMAND'});
 });
 
 test('guide commands require whole document-pixel positions and preserve fixed axes on update',()=>{
@@ -115,7 +101,6 @@ test('guide commands require whole document-pixel positions and preserve fixed a
     assert.doesNotThrow(()=>validateCommand(command,{...base,...fields}));
     assert.ok(transactionCommands.has(command));assert.equal(readCommands.has(command),false);
     assert.throws(()=>validateCommand(command,{...base,...fields,unknown:true}),{code:'INVALID_ARGUMENTS'});
-    assert.throws(()=>validateBackendOptions('photoshop',command,fields),{code:'UNSUPPORTED_COMMAND'});
   }
   for(const position of [-1,8193,0.5,Infinity]) assert.throws(()=>validateCommand('add_guide',{...base,axis:'vertical',position}),{code:'INVALID_ARGUMENTS'});
   assert.throws(()=>validateCommand('add_guide',{...base,axis:'x',position:1}),{code:'INVALID_ARGUMENTS'});
@@ -135,6 +120,4 @@ test('clipping chains have an exact ordered membership contract and native-only 
   assert.ok(transactionCommands.has('set_clipping_chain'));assert.equal(readCommands.has('set_clipping_chain'),false);
   const operations=[{command:'set_clipping_chain',args:fields}];
   assert.equal(validateCommand('apply_transaction',{...base,label:'Clip fills',operations}).operations.length,1);
-  assert.throws(()=>validateBackendOptions('photoshop','set_clipping_chain',fields),{code:'UNSUPPORTED_COMMAND'});
-  assert.throws(()=>validateBackendOptions('photoshop','apply_transaction',{operations}),{code:'UNSUPPORTED_COMMAND'});
 });

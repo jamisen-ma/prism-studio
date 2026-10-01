@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { validateCommand, validateBackendOptions, transactionCommands } from '../shared/commands.mjs';
+import { validateCommand, transactionCommands } from '../shared/commands.mjs';
 
 const stroke = { documentId: 'doc', layerId: 'repair', tool: 'clone', points: [{ x: 5.5, y: 5.5 }], source: { x: 1.5, y: 1.5 }, size: 3, hardness: 1, opacity: 1 };
 const invalid = value => value?.code === 'INVALID_ARGUMENTS';
@@ -40,5 +40,4 @@ test('repair layers accept explicit source and optional UUID identity with trans
   assert.equal(transaction.operations[1].args.documentId, undefined);
   const invalidTransaction = structuredClone(transaction); invalidTransaction.operations[1].args.sampleMode = 'current';
   assert.throws(() => validateCommand('apply_transaction', invalidTransaction), invalid);
-  for (const [command, args] of [['create_repair_layer', create], ['paint_stroke', { ...stroke, sampleMode: 'all' }], ['paint_stroke', { ...stroke, ignoreAdjustments: false }], ['apply_transaction', transaction]]) assert.throws(() => validateBackendOptions('photoshop', command, args), { code: 'UNSUPPORTED_COMMAND' });
 });

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { commandSchemas, validateCommand, validateBackendOptions, validateEditRecipeDefinition } from '../shared/commands.mjs';
+import { commandSchemas, validateCommand, validateEditRecipeDefinition } from '../shared/commands.mjs';
 
 const ranges=['master','reds','yellows','greens','cyans','blues','magentas'];
 const base={documentId:'doc',layerId:'layer'},invalid={code:'INVALID_ARGUMENTS'};
@@ -27,19 +27,17 @@ test('targeted HSL enforces distinct hue/percent limits, dense triples and exact
   for(const parameters of [null,[],{master:[0,0,0],method:'multiplicative'},{reds:[0,0,0],whites:[0,0,0]},{reds:[0,0,0],colorize:false},{reds:[0,0,0],falloff:60}])assert.throws(()=>call(parameters),invalid);
 });
 
-test('targeted HSL partial updates remain detached and native-only tuple semantics reject the bridge recursively',()=>{
+test('targeted HSL partial updates remain detached and tuple semantics survive transactions',()=>{
   for(const command of ['update_adjustment','update_layer_filter']){
     const target={...base,...(command==='update_layer_filter'?{filterId:'filter'}:{})};
     for(const parameters of [{},...ranges.map(range=>({[range]:[180,-.01,100]}))]){
       const expected=structuredClone(parameters),parsed=validateCommand(command,{...target,parameters});for(const range of ranges)if(parameters[range])parameters[range][0]=0;
       assert.deepEqual(parsed.parameters,expected);assert.equal(parsed.value,undefined);
       if(Object.keys(expected).length){
-        assert.doesNotThrow(()=>validateBackendOptions('native',command,{...target,parameters:expected}));assert.throws(()=>validateBackendOptions('photoshop',command,{...target,parameters:expected}),{code:'UNSUPPORTED_COMMAND'});
-        const args={layerId:'layer',...(command==='update_layer_filter'?{filterId:'filter'}:{}),parameters:expected};const transaction=validateCommand('apply_transaction',{documentId:'doc',label:'Targeted HSL',operations:[{command,args}]});assert.throws(()=>validateBackendOptions('photoshop','apply_transaction',transaction),{code:'UNSUPPORTED_COMMAND'});
+        const args={layerId:'layer',...(command==='update_layer_filter'?{filterId:'filter'}:{}),parameters:expected};const transaction=validateCommand('apply_transaction',{documentId:'doc',label:'Targeted HSL',operations:[{command,args}]});assert.deepEqual(transaction.operations[0].args.parameters,expected);
       }
     }
   }
-  assert.throws(()=>validateBackendOptions('photoshop','add_adjustment',{kind:'hue_saturation',value:0}),{code:'UNSUPPORTED_COMMAND'});
 });
 
 test('targeted HSL recipes distinguish HSL triples from overlapping CMYK rows and bind only the declared adjustment family',()=>{

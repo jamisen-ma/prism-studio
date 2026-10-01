@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, ArrowUpRight, Check, ChevronDown, CircleAlert, Clock3, Copy, MessageSquare, ImagePlus, Layers, LoaderCircle, RefreshCw, Sparkles, SquareDashed, WandSparkles, X } from 'lucide-react';
+import { ArrowUpRight, Check, ChevronDown, CircleAlert, Clock3, Copy, MessageSquare, ImagePlus, Layers, LoaderCircle, RefreshCw, Sparkles, SquareDashed, WandSparkles, X } from 'lucide-react';
 import { api, command, type BackendId, type Document } from './api';
 import { codexJobPresentation } from './generation';
 import type { CodexWorkerStatus, GenerationBackground, GenerationController, GenerationJob, GenerationPreview, GenerationProvider, GenerationQuality, GenerationSize } from './generation';
@@ -43,7 +43,7 @@ function elapsed(job: GenerationJob, now: number) {
   return seconds >= 60 ? `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, '0')}s` : `${seconds}s`;
 }
 
-export function GenerationPanel({ controller, document, backend, busy, initialPrompt, initialJobId, onOpenResult, onSwitchNative, onSelectArea }: { controller: GenerationController; document: Document | null; backend: BackendId; busy: boolean; initialPrompt: string; initialJobId?: string; onOpenResult: (documentId: string, layerId?: string) => Promise<void>; onSwitchNative: () => void; onSelectArea: () => void }) {
+export function GenerationPanel({ controller, document, backend, busy, initialPrompt, initialJobId, onOpenResult, onSelectArea }: { controller: GenerationController; document: Document | null; backend: BackendId; busy: boolean; initialPrompt: string; initialJobId?: string; onOpenResult: (documentId: string, layerId?: string) => Promise<void>; onSelectArea: () => void }) {
   const { status, checkApiConfiguration, checkingApiConfiguration, jobs, loading, error, submitting, pendingAction, submit, cancel, apply, refresh } = controller;
   const [provider, setProvider] = useState<GenerationProvider>('codex');
   const [copiedJob, setCopiedJob] = useState('');
@@ -119,7 +119,7 @@ export function GenerationPanel({ controller, document, backend, busy, initialPr
   const providerReady = provider === 'codex' ? automatic ? automationReady : status?.providers?.some(item => item.id === 'codex' && item.available) : status?.configured;
 
   return <div className="generation-panel"><div className="generation-heading"><div><span className="eyebrow">IMAGINATION, INTO IMAGE</span><h1 id="modal-title">Make what you have in mind.</h1><p className="modal-intro">Create an image, reimagine your canvas, or fill a selected area.</p></div><span className={`generation-connection ${providerReady ? 'configured' : ''}`}><span className={`status-dot ${providerReady ? 'connected' : ''}`} />{loading || provider === 'openai' && checkingApiConfiguration ? 'Connecting' : provider === 'codex' ? automatic ? worker?.state === 'checking' ? 'Checking local Codex' : automationReady ? worker?.state === 'working' ? 'Local Codex working' : 'Local Codex ready' : 'Local Codex unavailable' : 'Codex conversation' : status?.configured ? 'OpenAI configured' : 'API not configured'}</span></div>
-    {backend !== 'native' ? <div className="generation-native-notice"><Sparkles size={22} /><div><strong>Generate in Prism Native.</strong><p>Switch to the native editor to create images and add generated layers. Your Photoshop document stays in its own workspace.</p></div><button className="button primary" onClick={onSwitchNative}>Switch to Native<ArrowRight size={14} /></button></div> : <div className="generation-layout">
+    <div className="generation-layout">
       <form className="generation-form" onSubmit={(event) => { event.preventDefault(); void submitRequest(); }}>
         <label className="field-label generation-provider">Create images with<select aria-label="Image generation provider" value={provider} onChange={event => setProvider(event.target.value as GenerationProvider)}><option value="codex">{automatic ? 'Codex · automatic local worker' : 'Codex conversation'}</option><option value="openai">OpenAI API (optional)</option></select></label>{provider === 'codex' && <p className="generation-handoff-intro" role="status">{automatic ? automationReady ? 'The local Codex worker checks the queue every 5 seconds, creates your image, and returns it here automatically. No copying is needed.' : worker?.message || (worker?.state === 'checking' ? 'Checking local Codex. Submitted requests wait in its automatic queue.' : 'The local Codex worker is unavailable. Submitted requests wait until it is ready; you can cancel queued requests.') : 'Prepare your request here, then send its instruction to your Codex conversation. Codex creates the image with its image tool and returns it to this workspace.'}</p>}
         <div className="generation-modes" role="group" aria-label="Image generation mode">{([
@@ -149,6 +149,6 @@ export function GenerationPanel({ controller, document, backend, busy, initialPr
         </div>}
         <div className="generation-history-heading"><span>Recent requests</span><span>{jobs.length}</span></div><div className="generation-history">{(showAll ? jobs : jobs.slice(0, 8)).map((job) => <button type="button" key={job.id} className={`generation-history-item ${selectedJob?.id === job.id ? 'selected' : ''}`} onClick={() => { setSelectedId(job.id); setActionError(''); }}><JobThumbnail job={job} worker={worker} /><span className="generation-history-copy"><strong>{job.prompt}</strong><span>{codexJobPresentation(job, worker)?.label || STATUS_LABELS[job.status]}<i>·</i>{new Date(job.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></span>{job.status === 'ready' && <span className="generation-ready-dot" />}</button>)}{!jobs.length && <p className="generation-no-history">Your creative history starts with the first request.</p>}</div>{jobs.length > 8 && <button type="button" className="generation-show-history" onClick={() => setShowAll(!showAll)}>{showAll ? 'Show recent requests' : `Show all ${jobs.length} requests`}<ChevronDown size={12} /></button>}
       </aside>
-    </div>}
+    </div>
   </div>;
 }

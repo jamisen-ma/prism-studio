@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { commandSchemas, validateCommand, validateBackendOptions, validateEditRecipeDefinition, readCommands, transactionCommands } from '../shared/commands.mjs';
+import { commandSchemas, validateCommand, validateEditRecipeDefinition, readCommands, transactionCommands } from '../shared/commands.mjs';
 
 const base={documentId:'document',expectedRevision:7,layerId:'photo'};
 const corners=[{x:0,y:0},{x:16,y:0},{x:16,y:12},{x:0,y:12}];
@@ -22,8 +22,6 @@ test('Distort requires positive revisions and indexes the full bounded transform
   for(const command of commands){
     for(const expectedRevision of [undefined,null,0,-1,.5,'7'])assert.throws(()=>validateCommand(command,{...fields(command),expectedRevision}),{code:'INVALID_ARGUMENTS'});
     assert.equal(readCommands.has(command),false);assert.equal(transactionCommands.has(command),true);
-    assert.throws(()=>validateBackendOptions('photoshop',command,fields(command)),{code:'UNSUPPORTED_COMMAND'});
-    validateBackendOptions('native',command,fields(command));
   }
   for(const command of commands.slice(1)){
     for(const transformIndex of [0,499])assert.equal(validateCommand(command,{...fields(command),transformIndex}).transformIndex,transformIndex);
@@ -41,7 +39,6 @@ test('Distort transactions inherit one positive revision and preserve sequential
     assert.throws(()=>validateCommand('apply_transaction',{...transaction,operations:[{command,args:{...args,expectedRevision}}]}),{code:'INVALID_TRANSACTION'});
     assert.throws(()=>validateCommand('apply_transaction',{...transaction,operations:[{command,args:{...args,documentId:'other'}}]}),{code:'INVALID_TRANSACTION'});
   }
-  assert.throws(()=>validateBackendOptions('photoshop','apply_transaction',transaction),{code:'UNSUPPORTED_COMMAND'});
 });
 
 test('Distort extends no legacy affine, resize, selection or recipe shape',()=>{

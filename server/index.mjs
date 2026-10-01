@@ -2,7 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { NativeBackend } from './native.mjs';import { GenerationManager } from './generation.mjs';
 import { CodexWorker } from './codex-worker.mjs';
 import { ChatManager } from './chat.mjs';
@@ -14,11 +14,16 @@ import { createProjectRoutes } from './project-routes.mjs';
 import { createPsdRoutes } from './psd-routes.mjs';
 import { createPsdImportRoutes } from './psd-import-routes.mjs';
 import { SegmentationService } from './segmentation.mjs';
-import { PhotoshopBridge, sameToken } from './bridge.mjs';
-import { commandError, validateCommand, validateBackendOptions, readCommands, commandLabels } from '../shared/commands.mjs';
+import { commandError, validateCommand, readCommands, commandLabels } from '../shared/commands.mjs';
 
 export const PROJECT_ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const MAX_BODY=42*1024*1024;
+
+function sameToken(a,b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const aa=Buffer.from(a), bb=Buffer.from(b);
+  return aa.length === bb.length && timingSafeEqual(aa,bb);
+}
 const MIME={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.ico':'image/x-icon','.woff2':'font/woff2'};
 
 async function getToken(dataDir) {
@@ -60,7 +65,7 @@ export function statusCode(error) {
   if(['REVISION_CONFLICT','STALE_REVISION','REQUEST_CONFLICT','IDEMPOTENCY_CONFLICT'].includes(error.code))return 409;
   if(error.code==='PAYLOAD_TOO_LARGE'||error.code==='IMAGE_TOO_LARGE')return 413;
   if(error.code==='COMMAND_TIMEOUT')return 504;
-  if(error.code==='PHOTOSHOP_DISCONNECTED'||error.code==='QUEUE_FULL')return 503;
+  if(error.code==='QUEUE_FULL')return 503;
   if(error.code==='NOT_FOUND'||error.code==='DOCUMENT_NOT_FOUND')return 404;
   return error.code ? 400:500;
 }
@@ -80,9 +85,9 @@ export async function serveDist(request,response,url,json,missingMessage,extraHe
 }
 
 // `hosted` builds one per-user workspace for server/hosted.mjs: it creates no
-// listener, pairing key or Photoshop bridge, and exposes `handleApi` for use
+// listener or pairing key, and exposes `handleApi` for use
 // only after the hosted front server has authenticated that user.
-export async function createCompanion({dataDir=path.join(PROJECT_ROOT,'.prism'),port=43120,commandTimeout=60_000,imageProvider,getImageKey,segmentSubject,codexWorkerEnabled=false,codexImageAdapter,chatEnabled=false,chatAdapter,chatToolContextFactory=createChatToolContext,hosted=false,codexHome,segmentation:sharedSegmentation,segmentationEnabled=true,getBaseUrl,maxBody=MAX_BODY,maxDocuments=Infinity,beforeMutation}={}) {
+export async function createCompanion({dataDir=path.join(PROJECT_ROOT,'.prism'),port=43120,imageProvider,getImageKey,segmentSubject,codexWorkerEnabled=false,codexImageAdapter,chatEnabled=false,chatAdapter,chatToolContextFactory=createChatToolContext,hosted=false,codexHome,segmentation:sharedSegmentation,segmentationEnabled=true,getBaseUrl,maxBody=MAX_BODY,maxDocuments=Infinity,beforeMutation}={}) {
   const token=hosted?randomBytes(32).toString('hex'):await getToken(dataDir);
   if(hosted)await fs.mkdir(dataDir,{recursive:true,mode:0o700});
   const segmentation=sharedSegmentation||new SegmentationService({dataDir});
@@ -102,9 +107,6 @@ export async function createCompanion({dataDir=path.join(PROJECT_ROOT,'.prism'),
     else response.end();
   });});
   if(server){server.requestTimeout=120_000;server.headersTimeout=15_000;}
-  const bridge=hosted?{connected:false,info:null,async execute(){throw commandError('UNSUPPORTED_COMMAND','The Photoshop bridge is not available on a hosted Prism server.');},async close(){}}:new PhotoshopBridge({server,token,commandTimeout,onEvent(event){
-    if(event.type!=='document_changed')log({backend:'photoshop',command:'connection',label:event.type==='connected'?'Photoshop connected':'Photoshop disconnected',status:'success'});
-  }});
   const readBody=(request,{maxBytes=MAX_BODY}={})=>readJson(request,{maxBytes:Math.min(maxBytes,maxBody)});
   function log(event){const item={id:randomUUID(),timestamp:new Date().toISOString(),...event};activity.unshift(item);activity.splice(150);return item;}
   function json(response,status,data){response.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});response.end(JSON.stringify(data));}
@@ -116,10 +118,9 @@ export async function createCompanion({dataDir=path.join(PROJECT_ROOT,'.prism'),
     queues.set(backend,next);next.catch(()=>{});return next;
   }
   async function execute({backend,command,args={},requestId}={}){
-    if(!['native','photoshop'].includes(backend))throw commandError('INVALID_ARGUMENTS','Choose the native or photoshop backend.');
+    if(backend!=='native')throw commandError('INVALID_ARGUMENTS','Choose the native backend.');
     if(backend==='native'&&['create_document','import_image'].includes(command)&&native.projects.size>=maxDocuments)throw commandError('LIMIT_EXCEEDED',`This account has reached its ${maxDocuments}-document limit. Delete a document before adding another.`);
     const validated=validateCommand(command,args);
-    validateBackendOptions(backend,command,validated);
     if(requestId!==undefined && (typeof requestId!=='string'||requestId.length<1||requestId.length>160))throw commandError('INVALID_ARGUMENTS','requestId must contain 1–160 characters.');
     const mutating=!readCommands.has(command),key=requestId && mutating ? `${backend}:${requestId}`:null;
     if(mutating&&beforeMutation)await beforeMutation(command);
@@ -134,7 +135,7 @@ export async function createCompanion({dataDir=path.join(PROJECT_ROOT,'.prism'),
       const started=Date.now();
       const event=tracked?log({backend,command,label:command==='apply_transaction'?validated.label:commandLabels[command],status:'running'}):null;
       try{
-        const result=await (backend==='native'?native:bridge).execute(command,validated);
+        const result=await native.execute(command,validated);
         if(event)Object.assign(event,{status:'success',durationMs:Date.now()-started});
         return result;
       }catch(error){if(event)Object.assign(event,{status:'error',durationMs:Date.now()-started,error:error.code?error.message:'The edit failed.'});throw error;}
@@ -159,11 +160,10 @@ export async function createCompanion({dataDir=path.join(PROJECT_ROOT,'.prism'),
       if(request.method==='GET' && url.pathname==='/api/status'){
         json(response,200,{name:'Prism Studio',version:'0.1.0',backends:[
           {id:'native',label:'Prism Native',connected:true,commands:nativeCapabilities.commands,limitations:nativeCapabilities.limitations,adjustmentKinds:nativeCapabilities.adjustmentKinds,curvesInterpolationPolicy:nativeCapabilities.curvesInterpolationPolicy,curvesInterpolationModes:nativeCapabilities.curvesInterpolationModes,photoFilterPolicy:nativeCapabilities.photoFilterPolicy,colorLookupPolicy:nativeCapabilities.colorLookupPolicy,colorLookupFormats:nativeCapabilities.colorLookupFormats,colorLookupInputSpaces:nativeCapabilities.colorLookupInputSpaces,colorLookupLimits:nativeCapabilities.colorLookupLimits,curvesBanksPolicy:nativeCapabilities.curvesBanksPolicy,curvesBankNames:nativeCapabilities.curvesBankNames,selectiveColorPolicy:nativeCapabilities.selectiveColorPolicy,selectiveColorMethods:nativeCapabilities.selectiveColorMethods,selectiveColorRanges:nativeCapabilities.selectiveColorRanges,hueSaturationPolicy:nativeCapabilities.hueSaturationPolicy,hueSaturationRanges:nativeCapabilities.hueSaturationRanges,layerFilterKinds:nativeCapabilities.layerFilterKinds,layerFilterCoordinates:nativeCapabilities.layerFilterCoordinates,layerFilterBaking:nativeCapabilities.layerFilterBaking,layerFilterSpatialPolicy:nativeCapabilities.layerFilterSpatialPolicy,layerFilterUnsharpPolicy:nativeCapabilities.layerFilterUnsharpPolicy,layerFilterNoisePolicy:nativeCapabilities.layerFilterNoisePolicy,layerFilterHighPassPolicy:nativeCapabilities.layerFilterHighPassPolicy,layerFilterLocalTonePolicy:nativeCapabilities.layerFilterLocalTonePolicy,layerFilterMaskPolicy:nativeCapabilities.layerFilterMaskPolicy,layerFilterMaskCoordinates:nativeCapabilities.layerFilterMaskCoordinates,layerFilterMaskSources:nativeCapabilities.layerFilterMaskSources,layerFilterMaskShapes:nativeCapabilities.layerFilterMaskShapes,layerFilterMaskProperties:nativeCapabilities.layerFilterMaskProperties,layerFilterMaskCaptureGeometry:nativeCapabilities.layerFilterMaskCaptureGeometry,layerFilterBlendPolicy:nativeCapabilities.layerFilterBlendPolicy,layerFilterBlendModes:nativeCapabilities.layerFilterBlendModes,layerDistortPolicy:nativeCapabilities.layerDistortPolicy,layerDistortCoordinates:nativeCapabilities.layerDistortCoordinates,layerDistortContentTypes:nativeCapabilities.layerDistortContentTypes,documentResizeMethods:nativeCapabilities.documentResizeMethods,documentResizeDefault:nativeCapabilities.documentResizeDefault,morphologyOperations:nativeCapabilities.morphologyOperations,layeredExportFormats:nativeCapabilities.layeredExportFormats,layeredImportFormats:nativeCapabilities.layeredImportFormats,psdImporterVersion:nativeCapabilities.psdImporterVersion,psdImportPolicy:nativeCapabilities.psdImportPolicy,layerStyleProperties:nativeCapabilities.layerStyleProperties,layerFillPolicy:nativeCapabilities.layerFillPolicy,layerFillContentTypes:nativeCapabilities.layerFillContentTypes,layerMaskProperties:nativeCapabilities.layerMaskProperties,layerMaskPositioning:nativeCapabilities.layerMaskPositioning,layerMaskPositionUnits:nativeCapabilities.layerMaskPositionUnits,layerMaskPositionOperations:nativeCapabilities.layerMaskPositionOperations,layerSelectionSources:nativeCapabilities.layerSelectionSources,layerSelectionMaskModes:nativeCapabilities.layerSelectionMaskModes,layerSelectionContentTypes:nativeCapabilities.layerSelectionContentTypes,denseMaskPolicy:nativeCapabilities.denseMaskPolicy,denseMaskLimits:nativeCapabilities.denseMaskLimits,channelSelectionPolicy:nativeCapabilities.channelSelectionPolicy,channelSelectionChannels:nativeCapabilities.channelSelectionChannels,channelPreviewLimits:nativeCapabilities.channelPreviewLimits,colorRangePolicy:nativeCapabilities.colorRangePolicy,colorRangeLimits:nativeCapabilities.colorRangeLimits,colorRangePreviewLimits:nativeCapabilities.colorRangePreviewLimits,maskPreviewSources:nativeCapabilities.maskPreviewSources,maskPreviewMaskModes:nativeCapabilities.maskPreviewMaskModes,textSpacingProperties:nativeCapabilities.textSpacingProperties,textTrackingUnits:nativeCapabilities.textTrackingUnits,textLeadingUnits:nativeCapabilities.textLeadingUnits,retouchSampleModes:nativeCapabilities.retouchSampleModes,retouchSamplingTools:nativeCapabilities.retouchSamplingTools,retouchIgnoreAdjustments:nativeCapabilities.retouchIgnoreAdjustments,retouchCurrentAndBelowScope:nativeCapabilities.retouchCurrentAndBelowScope,repairLayerPlacement:nativeCapabilities.repairLayerPlacement,editRecipeVersion:nativeCapabilities.editRecipeVersion,editRecipeCommands:nativeCapabilities.editRecipeCommands,editRecipeSlotTypes:nativeCapabilities.editRecipeSlotTypes,blendModes:nativeCapabilities.blendModes,groupModes:nativeCapabilities.groupModes,groupBlendModes:nativeCapabilities.groupBlendModes,clippingLayerTypes:nativeCapabilities.clippingLayerTypes,clippingBlendPolicy:nativeCapabilities.clippingBlendPolicy,guideAxes:nativeCapabilities.guideAxes,guideCoordinates:nativeCapabilities.guideCoordinates,projectFormats:nativeCapabilities.projectFormats,projectBundleVersion:nativeCapabilities.projectBundleVersion,exportFormats:nativeCapabilities.exportFormats,exportOptions:nativeCapabilities.exportOptions,exportDensityFormats:nativeCapabilities.exportDensityFormats,limits:nativeCapabilities.limits},
-          {id:'photoshop',label:'Adobe Photoshop',connected:Boolean(bridge.connected),commands:bridge.info?.capabilities||[],limitations:['Requires Photoshop and the Prism UXP plugin. Live compatibility must be validated in Photoshop.']},
-        ],bridge:{connected:Boolean(bridge.connected),appVersion:bridge.info?.appVersion,pluginVersion:bridge.info?.pluginVersion},ai:await imageGenerationStatus(generation,imageKey),segmentation:await segmentation.status(),activity});return;
+        ],ai:await imageGenerationStatus(generation,imageKey),segmentation:await segmentation.status(),activity});return;
       }
       if(request.method==='GET' && url.pathname==='/api/activity'){json(response,200,{activity});return;}      if(!hosted && request.method==='GET' && url.pathname==='/api/setup'){
-        json(response,200,{bridgeUrl:`ws://127.0.0.1:${actualPort}/bridge`,pluginPath:path.join(PROJECT_ROOT,'photoshop-plugin'),mcpCommand:process.execPath,mcpArgs:[path.join(PROJECT_ROOT,'server/mcp.mjs')],token});return;
+        json(response,200,{mcpCommand:process.execPath,mcpArgs:[path.join(PROJECT_ROOT,'server/mcp.mjs')]});return;
       }
       if(request.method==='POST' && url.pathname==='/api/command'){
         const body=await readBody(request);
@@ -195,9 +195,9 @@ export async function createCompanion({dataDir=path.join(PROJECT_ROOT,'.prism'),
     // The shared segmentation service belongs to the hosted server, not a user.
     async close(){await chat.close();await codexWorker?.close();await generation.close();await native.close();},
   };
-  return {server,bridge,native,generation,codexWorker,chat,segmentation,execute,token,dataDir,
+  return {server,native,generation,codexWorker,chat,segmentation,execute,token,dataDir,
     async listen(){await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',()=>{server.off('error',reject);resolve();});});actualPort=server.address().port;return actualPort;},
-    async close(){await chat.close();await codexWorker?.close();await generation.close();await segmentation.close();await native.close();await bridge.close();await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});},
+    async close(){await chat.close();await codexWorker?.close();await generation.close();await segmentation.close();await native.close();await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});},
   };
 }
 

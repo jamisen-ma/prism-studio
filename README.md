@@ -2,15 +2,15 @@
 
 A standalone image editor controlled by an AI assistant through MCP. Prism implements its own document engine, editing tools, local subject extraction and AI image workflows. Photoshop is not required.
 
-This is an **early implementation**, not complete Photoshop feature parity. The native engine is tested against actual images. The [standalone roadmap](docs/ROADMAP.md) and [feature-family coverage matrix](docs/FEATURE_PARITY.md) track the remaining work beyond the toolbar inventory. An optional Adobe bridge is retained separately and is not a dependency or milestone for the standalone product.
+This is an **early implementation**, not complete Photoshop feature parity. The native engine is tested against actual images. The [standalone roadmap](docs/ROADMAP.md) and [feature-family coverage matrix](docs/FEATURE_PARITY.md) track the remaining work beyond the toolbar inventory.
 
 ## Run
 
 Requires Node.js 22.12+ and npm (macOS or Linux; Chrome recommended).
 
 ```sh
-git clone <repo-url> ai-photoshop
-cd ai-photoshop
+git clone https://github.com/jamisen-ma/prism-studio.git
+cd prism-studio
 npm install
 npm run dev
 ```
@@ -35,7 +35,7 @@ Then open **http://127.0.0.1:43120**. Keep the companion running while using MCP
 
 Run Prism Studio as one web service that a few people can share. Each person gets an account and connects their own Codex (ChatGPT) account. The repo includes a `Dockerfile` and `railway.json`.
 
-1. **Push to GitHub** as a **private** repository.
+1. **Push to GitHub.**
 2. In [Railway](https://railway.com) choose **New Project → Deploy from GitHub repo** and pick the repository. Railway builds it from the `Dockerfile`.
 3. **Add a Volume** to the service, mounted at **`/data`**. Accounts, documents and each user's Codex sign-in are stored there. Without a volume they are lost on every redeploy.
 4. **Set these variables** (service → Variables):
@@ -72,7 +72,7 @@ Codex is the AI assistant; this application exposes the image-editing tools. The
 Register the server using absolute paths appropriate to your machine:
 
 ```sh
-codex mcp add prism-studio -- node /path/to/ai-photoshop/server/mcp.mjs
+codex mcp add prism-studio -- node /path/to/prism-studio/server/mcp.mjs
 ```
 
 Or configure an MCP host:
@@ -80,17 +80,17 @@ Or configure an MCP host:
 ```toml
 [mcp_servers.prism-studio]
 command = "node"
-args = ["/path/to/ai-photoshop/server/mcp.mjs"]
+args = ["/path/to/prism-studio/server/mcp.mjs"]
 tool_timeout_sec = 120
 ```
 
-Reload the MCP host after adding the server. The companion must run first. For another companion port/data directory, set `PRISM_URL` and `PRISM_DATA_DIR` on the MCP process; the data directory must match the companion. The default UXP plugin's network permission targets port 43120.
+Reload the MCP host after adding the server. The companion must run first. For another companion port/data directory, set `PRISM_URL` and `PRISM_DATA_DIR` on the MCP process; the data directory must match the companion.
 
 Try this request in a connected assistant:
 
-> Use Prism Native. Import the photo at the path I provided. Inspect it, add a subtle exposure adjustment and reduce saturation as one undoable edit. Show me the preview, then export a PNG copy.
+> Import the photo at the path I provided. Inspect it, add a subtle exposure adjustment and reduce saturation as one undoable edit. Show me the preview, then export a PNG copy.
 
-Recommended tool sequence: `prism_status` → `prism_list_documents`/`prism_import_file` → `prism_get_document` → `prism_get_preview` → `prism_apply_transaction` → `prism_get_preview` → `prism_export_document`. For Photoshop, open the photo there, select the Photoshop backend, and inspect available capabilities first.
+Recommended tool sequence: `prism_status` → `prism_list_documents`/`prism_import_file` → `prism_get_document` → `prism_get_preview` → `prism_apply_transaction` → `prism_get_preview` → `prism_export_document`.
 
 ## Generate images and extract subjects
 
@@ -110,36 +110,36 @@ Protected cutouts retain original source RGB, support proportional placement and
 
 Prism includes real editing operations, not simulated toolbar buttons. Open **Browse all tools** to search the [71-tool Adobe inventory](docs/PHOTOSHOP_TOOL_INVENTORY.md). Each entry states what is implemented and links to Adobe's reference; unavailable tools are disabled.
 
-| Capability | Native engine | Photoshop plugin |
-| --- | --- | --- |
-| Documents, layers, previews, crop, resize | Implemented | Implemented; live-host validation pending |
-| Painting and retouching | Brush, pencil, eraser, clone, healing, dodge, burn, blur, sharpen, smudge, sponge, red-eye, color replacement; [separate repair layers and sampling scopes](docs/RETOUCH_SAMPLING.md), plus [Aligned Clone/Heal](docs/CLONE_ALIGNMENT.md) | Native-only |
-| Selections | Local subject extraction, rectangle, ellipse, lasso, single row/column, color regions and painted selections; layer transparency/additional-mask loading; [composite-channel selections](docs/DENSE_MASKS.md); feather/invert; up to 16 named reusable selections with combine modes | Rectangle and Photoshop subject selection |
-| Selection and mask shaping | Expand, contract, two-sided border and opening/closing smoothing on selections or existing layer masks; grayscale coverage and one-step undo | Native-only |
-| Masks and compositing | Geometric/painted content, group and adjustment masks with editable density, feather, inversion and independent mask positioning; 27 layer blend modes | Rectangular masks and the bridge's original 8 blend modes |
-| Layer Fill | [Separate content opacity](docs/LAYER_FILL.md) for six content types; outside styles retain overall Opacity; precise drafts, source retention and protected edits | Native-only |
-| Clipping chains | Editable image/gradient fills inside text, shapes or raster silhouettes; soft base alpha retained; explicit release and whole-chain grouping | Native-only |
-| Layer groups | Nested pass-through or isolated groups with 27 blend modes, whole-group masks/opacity/visibility, subtree duplication, reparenting and safe ungrouping | Native-only in this bridge version |
-| Rulers and guides | 64 persistent pixel guides, view-only rulers and zoom-aware Move snapping; numeric guide controls and undo | Native-only |
-| Arrange layers | Align to canvas or selected bounds; distribute centers or equal gaps with integer translations and fixed endpoints | Native-only in this bridge version |
-| Color | Exposure, brightness, contrast, saturation, temperature, vibrance, hue, highlights, shadows, blur, sharpen, editable Levels and [Linear/Smooth Curves](docs/SMOOTH_CURVES.md) with [Master/component banks](docs/CURVES_BANKS.md), Channel Mixer, Gradient Map, Color Balance, Black & White/tint, [Selective Color](docs/SELECTIVE_COLOR.md), targeted [Hue / Saturation](docs/TARGETED_HSL.md), imported [Color Lookup](docs/COLOR_LOOKUP.md), [Photo Filter](docs/PHOTO_FILTER.md) and histogram | Exposure, brightness, contrast and saturation |
-| Additional native adjustments | Invert, grayscale, sepia, posterize, threshold, median and alpha-weighted mosaic; editable and maskable | Native-only |
-| Editable layer filters | 32 raster filter kinds, including source Gaussian Blur, RGB Sharpen, Unsharp Mask, repeatable Add Noise, High Pass, Local Shadows / Highlights and Photo Filter, in a reorderable stack with 26 individual RGB blend modes, a source-space effect mask, enable/opacity controls and explicit Bake/Clear actions; originals retained | Native-only |
-| Outside layer styles | Editable drop shadow, outer glow and outlines;32 reusable document styles with atomic multi-layer application; original subject pixels preserved | Native-only |
-| Fill and sample | Bucket fill, region erasing, eyedropper and averaged samples | Native-only in this bridge version |
-| Shapes and paths | Editable rectangle, ellipse, triangle, polygon, star, line, cubic Bezier paths and anchor controls | Native-only in this bridge version |
-| Gradients | Editable linear, radial, angle, reflected and diamond gradients with alpha stops | Native-only in this bridge version |
-| Typography | Editable generic-family and bundled Fraunces text, alignment, bold/italic, tracking and Auto/explicit line spacing | Basic editable text |
-| Transform | Move selected content with V; numeric translation, scale, rotation and flip; editable [four-corner Distort](docs/DISTORT.md) with saved stages, canvas handles and [linked Perspective](docs/LINKED_PERSPECTIVE.md) | Canvas crop/resize |
-| AI image generation | Automatic local Codex image generation, manual handoffs, edits and selected fill; durable jobs and local hard clipping; optional explicit API route | Use generated files through the native workflow |
-| Protected cutouts | Local alpha extraction, proportional cross-document placement, outside outlines and protected compositing | Photoshop subject selection through bridge |
-| Canvas expansion | Nine anchors, reversible bounds changes, exact pixel retention and selected padding for AI outpainting | Native-only in this bridge version |
-| History and AI control | Atomic MCP transactions, revisions, undo/redo, auto-save and reopen | Modal/history transactions |
-| Reusable edit recipes | Saved typed filter, adjustment, typography and outside-style steps; explicit targets, validation, one-step Undo and definition transfer | Native-only |
-| Files | PNG/JPEG/WebP/TIFF import and flattened export; PNG/JPEG/TIFF resolution metadata, JPEG matte, lossless WebP | Open directly in Photoshop; PNG/JPEG export |
-| Portable projects | Editable `.prism` download/open with exact original assets, layers, groups, masks and saved selections; current state only, fresh history on import | Prism format; not Photoshop PSD |
-| Layered PSD import | Bounded RGB8 flat raster layers with raw/PackBits channels, simple masks and explicit color policy; exact original archive retained | Open files directly in Photoshop |
-| Layered PSD export | Strict flat raster/solid subset with separate masks, exact-byte opacity, sRGB and an opaque saved composite; compatibility report before download | Open files directly in Photoshop |
+| Capability | What Prism supports |
+| --- | --- |
+| Documents, layers, previews, crop, resize | Implemented |
+| Painting and retouching | Brush, pencil, eraser, clone, healing, dodge, burn, blur, sharpen, smudge, sponge, red-eye, color replacement; [separate repair layers and sampling scopes](docs/RETOUCH_SAMPLING.md), plus [Aligned Clone/Heal](docs/CLONE_ALIGNMENT.md) |
+| Selections | Local subject extraction, rectangle, ellipse, lasso, single row/column, color regions and painted selections; layer transparency/additional-mask loading; [composite-channel selections](docs/DENSE_MASKS.md); feather/invert; up to 16 named reusable selections with combine modes |
+| Selection and mask shaping | Expand, contract, two-sided border and opening/closing smoothing on selections or existing layer masks; grayscale coverage and one-step undo |
+| Masks and compositing | Geometric/painted content, group and adjustment masks with editable density, feather, inversion and independent mask positioning; 27 layer blend modes |
+| Layer Fill | [Separate content opacity](docs/LAYER_FILL.md) for six content types; outside styles retain overall Opacity; precise drafts, source retention and protected edits |
+| Clipping chains | Editable image/gradient fills inside text, shapes or raster silhouettes; soft base alpha retained; explicit release and whole-chain grouping |
+| Layer groups | Nested pass-through or isolated groups with 27 blend modes, whole-group masks/opacity/visibility, subtree duplication, reparenting and safe ungrouping |
+| Rulers and guides | 64 persistent pixel guides, view-only rulers and zoom-aware Move snapping; numeric guide controls and undo |
+| Arrange layers | Align to canvas or selected bounds; distribute centers or equal gaps with integer translations and fixed endpoints |
+| Color | Exposure, brightness, contrast, saturation, temperature, vibrance, hue, highlights, shadows, blur, sharpen, editable Levels and [Linear/Smooth Curves](docs/SMOOTH_CURVES.md) with [Master/component banks](docs/CURVES_BANKS.md), Channel Mixer, Gradient Map, Color Balance, Black & White/tint, [Selective Color](docs/SELECTIVE_COLOR.md), targeted [Hue / Saturation](docs/TARGETED_HSL.md), imported [Color Lookup](docs/COLOR_LOOKUP.md), [Photo Filter](docs/PHOTO_FILTER.md) and histogram |
+| Additional native adjustments | Invert, grayscale, sepia, posterize, threshold, median and alpha-weighted mosaic; editable and maskable |
+| Editable layer filters | 32 raster filter kinds, including source Gaussian Blur, RGB Sharpen, Unsharp Mask, repeatable Add Noise, High Pass, Local Shadows / Highlights and Photo Filter, in a reorderable stack with 26 individual RGB blend modes, a source-space effect mask, enable/opacity controls and explicit Bake/Clear actions; originals retained |
+| Outside layer styles | Editable drop shadow, outer glow and outlines;32 reusable document styles with atomic multi-layer application; original subject pixels preserved |
+| Fill and sample | Bucket fill, region erasing, eyedropper and averaged samples |
+| Shapes and paths | Editable rectangle, ellipse, triangle, polygon, star, line, cubic Bezier paths and anchor controls |
+| Gradients | Editable linear, radial, angle, reflected and diamond gradients with alpha stops |
+| Typography | Editable generic-family and bundled Fraunces text, alignment, bold/italic, tracking and Auto/explicit line spacing |
+| Transform | Move selected content with V; numeric translation, scale, rotation and flip; editable [four-corner Distort](docs/DISTORT.md) with saved stages, canvas handles and [linked Perspective](docs/LINKED_PERSPECTIVE.md) |
+| AI image generation | Automatic local Codex image generation, manual handoffs, edits and selected fill; durable jobs and local hard clipping; optional explicit API route |
+| Protected cutouts | Local alpha extraction, proportional cross-document placement, outside outlines and protected compositing |
+| Canvas expansion | Nine anchors, reversible bounds changes, exact pixel retention and selected padding for AI outpainting |
+| History and AI control | Atomic MCP transactions, revisions, undo/redo, auto-save and reopen |
+| Reusable edit recipes | Saved typed filter, adjustment, typography and outside-style steps; explicit targets, validation, one-step Undo and definition transfer |
+| Files | PNG/JPEG/WebP/TIFF import and flattened export; PNG/JPEG/TIFF resolution metadata, JPEG matte, lossless WebP |
+| Portable projects | Editable `.prism` download/open with exact original assets, layers, groups, masks and saved selections; current state only, fresh history on import |
+| Layered PSD import | Bounded RGB8 flat raster layers with raw/PackBits channels, simple masks and explicit color policy; exact original archive retained |
+| Layered PSD export | Strict flat raster/solid subset with separate masks, exact-byte opacity, sRGB and an opaque saved composite; compatibility report before download |
 
 Keyboard: **V** move, **B** brush, **E** eraser, **S** clone, **J** healing, **O / Shift+O** dodge/burn, **M** marquee, **L** lasso, **W** magic wand, **I** eyedropper, **U** shape, **P** pen, **G / Shift+G** gradient/bucket, **T** type, **H** hand, **C** crop. Use **[ / ]** for brush size, **Option/Alt-click** to set clone/heal source, and **Enter** to finish a pen path. Choose a raster layer for retouching, or create a paint layer. Paint adjustment masks to localize editable color changes.
 
@@ -214,13 +214,13 @@ Use **File → Download project** to take an editable `.prism` copy with you and
 - `.prism/models/`: downloaded local segmentation model.
 - `.prism/python-runtime/`: isolated CPU inference dependencies; no system Python packages are changed.
 - `.prism/secrets/openai-api-key`: server-only image-provider credential; never returned to clients.
-- `.prism/bridge-token`: generated local pairing key, restricted file permissions. Do not commit or share it.
+- `.prism/bridge-token`: generated local API key used by the browser and MCP server, restricted file permissions. Do not commit or share it.
 
 The shared API validates every command. Mutations are serialized, optional `expectedRevision` rejects stale requests, and a repeated `requestId` returns the same result during the current companion session. Use `apply_transaction` for one undo step across multiple edits. A failed transaction does not commit partial changes. Conventional command deduplication is bounded to the companion session. AI job retry IDs persist across restarts; interrupted provider calls are never automatically retried.
 
-Timeouts and connection losses can leave a Photoshop command's outcome unknown; inspect the document before retrying. Reloading the plugin resets its observed revision counters. Native changes automatically save; explicit save is also available. Export creates a flattened copy and preserves the editable project.
+Native changes automatically save; explicit save is also available. Export creates a flattened copy and preserves the editable project.
 
-The browser and MCP clients authenticate to the local companion. The server validates browser origins and hosts, and the optional plugin authenticates its socket with the pairing key. Ordinary edits and local segmentation stay on this computer. Built-in generation sends the requested prompt and edit references to the signed-in Codex image tool and uses Codex usage limits; the optional API route sends prompts/edit snapshots under separate API billing. No arbitrary script execution or remote listener is exposed. `npm run doctor` checks the standalone installation; optional `-- --check-api` and `-- --check-adobe` inspect those integrations explicitly.
+The browser and MCP clients authenticate to the local companion. The server validates browser origins and hosts. Ordinary edits and local segmentation stay on this computer. Built-in generation sends the requested prompt and edit references to the signed-in Codex image tool and uses Codex usage limits; the optional API route sends prompts/edit snapshots under separate API billing. No arbitrary script execution or remote listener is exposed. `npm run doctor` checks the standalone installation; optional `-- --check-api` inspects the OpenAI API integration explicitly.
 
 ## Verify
 
@@ -240,15 +240,3 @@ npm run doctor
 ```
 
 The browser test runs the compiled workspace with an isolated temporary companion and leaves user projects untouched. Build first. It uses installed Google Chrome on macOS, or Playwright Chromium on other platforms. Screenshots and exported fixtures go to `test-results/`. Set `PRISM_UI_URL` only when intentionally testing an already-running workspace. See [the tool inventory](docs/PHOTOSHOP_TOOL_INVENTORY.md), [the roadmap](docs/ROADMAP.md), [the initial command contract](docs/CONTRACT.md), and [professional command additions](docs/PRO_TOOLS.md) for implementation boundaries.
-
-## Optional existing Photoshop bridge
-
-This optional integration is only for people who already use Photoshop. Skip it for every Prism Native workflow.
-
-1. Open Photoshop 25+ and Adobe UXP Developer Tool.
-2. Add `photoshop-plugin/manifest.json` in UXP Developer Tool and load it.
-3. Open **Plugins → Prism Studio** in Photoshop.
-4. In the Prism workspace, open connection setup and copy the pairing key into the plugin.
-5. Connect. Select the Photoshop backend and open a document in Photoshop.
-
-The complete [Photoshop setup and manual validation checklist](photoshop-plugin/README.md) documents precisely what is implemented and what still needs real-host testing. The bridge does not install Photoshop or activate an Adobe account.

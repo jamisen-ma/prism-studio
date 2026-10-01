@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { commandSchemas, validateCommand, validateBackendOptions, readCommands, transactionCommands } from '../shared/commands.mjs';
+import { commandSchemas, validateCommand, readCommands, transactionCommands } from '../shared/commands.mjs';
 
 const documentId = 'channel-schema-document', layerId = 'channel-schema-layer';
 const channels = ['red', 'green', 'blue', 'luma', 'alpha'];
@@ -95,17 +95,4 @@ test('Explicit source alpha8 reuse validates exact framed metadata without widen
   Object.setPrototypeOf(inheritedShape, { get shape() { getterCalls++; return 'alpha8'; } });
   invalid(() => validateCommand('set_layer_filter_mask', { ...input, mask: inheritedShape }));
   assert.equal(getterCalls, 0);
-});
-
-test('Channel commands and alpha8 source masks explicitly refuse on the optional Adobe bridge', () => {
-  for (const command of ['get_channel_preview', 'load_channel_selection']) {
-    const args = { documentId, expectedRevision: 1, channel: 'luma' };
-    assert.throws(() => validateBackendOptions('photoshop', command, args), { code: 'UNSUPPORTED_COMMAND' });
-    assert.doesNotThrow(() => validateBackendOptions('native', command, args));
-  }
-  assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', { documentId, expectedRevision: 1,
-    operations: [{ command: 'load_channel_selection', args: { channel: 'blue' } }] }), { code: 'UNSUPPORTED_COMMAND' });
-  assert.throws(() => validateBackendOptions('photoshop', 'set_layer_filter_mask', { documentId, expectedRevision: 1, layerId,
-    source: 'mask', mask: descriptor() }), { code: 'UNSUPPORTED_COMMAND' });
-  assert.doesNotThrow(() => validateBackendOptions('photoshop', 'select_rectangle', { documentId, x: 0, y: 0, width: 1, height: 1 }));
 });

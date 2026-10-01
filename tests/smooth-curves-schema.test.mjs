@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateCommand, validateBackendOptions, validateEditRecipeDefinition } from '../shared/commands.mjs';
+import { validateCommand, validateEditRecipeDefinition } from '../shared/commands.mjs';
 
 const points = [{ x: 0, y: 255 }, { x: Number.MIN_VALUE, y: 0 }, { x: 0.1, y: 64.5 }, { x: 0.10000000000000002, y: 64 }, { x: 255, y: 0.49999999999999994 }];
 const base = { documentId: 'doc', layerId: 'layer' };
@@ -37,10 +37,7 @@ test('Curves updates retain sparse detached fields and explicit interpolation st
     }
     for (const interpolation of ['linear', 'smooth']) {
       const args = { layerId: 'layer', ...(command === 'update_layer_filter' ? { filterId: 'filter' } : {}), parameters: { interpolation } };
-      assert.doesNotThrow(() => validateBackendOptions('native', command, args));
-      assert.throws(() => validateBackendOptions('photoshop', command, args), { code: 'UNSUPPORTED_COMMAND' });
       const transaction = validateCommand('apply_transaction', { documentId: 'doc', label: 'Curve mode', operations: [{ command, args }] });
-      assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', transaction), { code: 'UNSUPPORTED_COMMAND' });
     }
   }
 });

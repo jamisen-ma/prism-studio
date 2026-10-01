@@ -8,8 +8,6 @@ flowchart TD
   U[Browser workspace] --> C[Authenticated local companion]
   M --> C
   C --> N[Native document engine]
-  C --> B[Photoshop WebSocket bridge]
-  B --> P[UXP plugin / Photoshop]
   C --> J[Persistent image job manager]
   J --> H[Saved Codex image handoff]
   H --> W[Local Codex worker: five-second polling]
@@ -26,9 +24,9 @@ flowchart TD
   N --> F[Immutable assets + editable graphs + history]
 ```
 
-## Standalone engine and optional compatibility bridge
+## Standalone engine
 
-The product roadmap targets native feature parity and requires no Photoshop installation. The earlier optional bridge is retained for compatibility. When explicitly used, Photoshop documents stay authoritative in Photoshop. The UXP plugin executes the supported command subset inside modal/history scopes. Its capabilities are exposed only while connected. Unsupported operations fail explicitly. Real-host verification is still required; simulated adapter tests cannot establish Adobe behavior across versions.
+The product roadmap targets native feature parity and requires no Photoshop installation. The earlier optional Photoshop bridge (UXP plugin) has been removed; the native engine is the only backend.
 
 Native documents stay authoritative in Prism. They contain an ordered layer graph, immutable raster assets, editable text/vector/gradient/adjustment settings, masks and history states. A command validates its arguments and document revision, edits a cloned graph and persists the new state atomically. Transactions group supported commands into one history step and discard graph changes on failure.
 
@@ -36,7 +34,7 @@ Aligned Clone/Heal is a small client session over the existing explicit-source s
 
 Reusable recipes store typed metadata edits with explicit target slots. Their validation and application share staged native mutations and the complete prospective history-size check; application is one revision-bound commit. Independently positioned additional masks retain their source frame in a validated wrapper. Shared coverage helpers keep rendering, protection, inspection, selection loading and PSD consistent. Transactions containing retained masks also validate intermediate graphs before later pixel operations. See [recipes](EDIT_RECIPES.md) and [mask positioning](MASK_POSITION.md).
 
-The engines share command schemas and observation tools, not proprietary Adobe algorithms or guaranteed identical file semantics. [Bounded PSD import](PSD_IMPORT.md) and [strict layered PSD export](PSD_EXPORT.md) support declared flat raster subsets with explicit reports; full PSD/PSB fidelity, RAW, Smart Objects and higher-precision professional color remain future milestones. See the [roadmap](ROADMAP.md) and [sourced feature inventory](PHOTOSHOP_TOOL_INVENTORY.md).
+The engine implements its own algorithms, not proprietary Adobe algorithms or guaranteed identical file semantics. [Bounded PSD import](PSD_IMPORT.md) and [strict layered PSD export](PSD_EXPORT.md) support declared flat raster subsets with explicit reports; full PSD/PSB fidelity, RAW, Smart Objects and higher-precision professional color remain future milestones. See the [roadmap](ROADMAP.md) and [sourced feature inventory](PHOTOSHOP_TOOL_INVENTORY.md).
 
 Explicit source-filter baking evaluates current working RGB with source/cutout alpha, restores original working alpha, and retains masks and geometry. It preserves exact current composition for admitted graphs; active stacks above earlier protected content reject because their contextual unfiltered restoration cannot be baked. Source, output and deduplicated-asset reads are bounded before allocation. Private-file PNG staging avoids Sharp's whole-buffer stream behavior. Complete bake-containing transactions share new-asset ownership through commit, including later pixel edits. See [baking scope and phase ledger](FILTER_BAKING.md).
 
@@ -95,7 +93,7 @@ Cancellation records intent immediately, including while completion waits in the
 
 ## Local runtime boundaries
 
-The companion binds to loopback and validates Host, Origin and authentication. MCP uses stdio plus authenticated local HTTP. The Photoshop plugin uses an authenticated local WebSocket. The image provider has fixed HTTPS endpoints and bounded PNG responses. No request accepts executable scripts.
+The companion binds to loopback and validates Host, Origin and authentication. MCP uses stdio plus authenticated local HTTP. The image provider has fixed HTTPS endpoints and bounded PNG responses. No request accepts executable scripts.
 
 Segmentation runs in an isolated Python virtual environment using ONNX Runtime CPU. The child receives a minimal environment without provider credentials, a fixed script and model path, bounded framed PNG input and emits only bounded raw alpha. A verified model is reused; timeouts and shutdown terminate the actual process. Setup downloads dependencies, while inference itself is offline.
 

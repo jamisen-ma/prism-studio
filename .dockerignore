@@ -6,7 +6,6 @@ test-results
 .gitignore
 docs
 tests
-photoshop-plugin
 *.log
 .env
 .env.*

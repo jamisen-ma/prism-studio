@@ -8,7 +8,7 @@ import sharp from 'sharp';
 import { ADJUSTMENTS, adjustmentTransform, normalizeParameters } from '../server/color.mjs';
 import { applyLayerFilters, filterWork } from '../server/layer-filters.mjs';
 import { NativeBackend } from '../server/native.mjs';
-import { validateCommand, validateBackendOptions } from '../shared/commands.mjs';
+import { validateCommand } from '../shared/commands.mjs';
 
 const defaults = { monochrome: false, red: [100, 0, 0, 0], green: [0, 100, 0, 0], blue: [0, 0, 100, 0], gray: [21.26, 71.52, 7.22, 0] };
 const transform = (kind, parameters) => adjustmentTransform({ kind, value: 0, parameters });
@@ -112,7 +112,6 @@ test('normalization owns canonical rows/stops and both command schemas reject wr
   for (const kind of ['channel_mixer', 'gradient_map']) {
     assert.equal(validateCommand('add_adjustment', { documentId: 'fixture', kind, value: 0, parameters: {} }).value, 0);
     assert.throws(() => validateCommand('add_adjustment', { documentId: 'fixture', kind, value: 1 }), { code: 'INVALID_ARGUMENTS' });
-    assert.throws(() => validateBackendOptions('photoshop', 'add_adjustment', { kind, value: 0 }), { code: 'UNSUPPORTED_COMMAND' });
   }
 });
 

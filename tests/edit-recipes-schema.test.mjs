@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { validateCommand, validateBackendOptions, validateEditRecipeDefinition, validateEditRecipeRecord, validateEditRecipeBindings, readCommands } from '../shared/commands.mjs';
+import { validateCommand, validateEditRecipeDefinition, validateEditRecipeRecord, validateEditRecipeBindings, readCommands } from '../shared/commands.mjs';
 import { assertEditRecipeJson } from '../shared/edit-recipes.mjs';
 
 const definition = () => ({ name: 'Warm cover', slots: [{ key: 'photo', type: 'raster' }, { key: 'heading', type: 'text', label: 'Title' }], steps: [
@@ -55,7 +55,7 @@ test('recipe entry guards reject hostile non-JSON inputs before evaluating acces
   assert.throws(() => validateCommand('save_edit_recipe', { documentId: 'doc', ...definition(), extra: deep }), invalid);
 });
 
-test('recipe transport requires an application revision, keeps read reports readonly and forbids nested or bridge use', () => {
+test('recipe transport requires an application revision, keeps read reports readonly and forbids nesting', () => {
   const recipeId = randomUUID(), layerId = randomUUID(), saved = { documentId: 'doc', ...definition() };
   validateCommand('save_edit_recipe', saved);
   assert.deepEqual(validateEditRecipeBindings({}), {});
@@ -66,7 +66,6 @@ test('recipe transport requires an application revision, keeps read reports read
   assert.equal(validateCommand('apply_edit_recipe', { ...args, expectedRevision: 4 }).expectedRevision, 4);
   for (const command of ['get_edit_recipe', 'validate_edit_recipe']) assert.equal(readCommands.has(command), true);
   for (const command of ['save_edit_recipe', 'get_edit_recipe', 'rename_edit_recipe', 'delete_edit_recipe', 'validate_edit_recipe', 'apply_edit_recipe']) {
-    assert.throws(() => validateBackendOptions('photoshop', command, {}), { code: 'UNSUPPORTED_COMMAND' });
     assert.throws(() => validateCommand('apply_transaction', { documentId: 'doc', label: 'No recipe nesting', operations: [{ command, args: {} }] }), { code: 'INVALID_TRANSACTION' });
   }
 });

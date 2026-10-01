@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { commandSchemas, validateCommand, validateBackendOptions, validateEditRecipeDefinition } from '../shared/commands.mjs';
+import { commandSchemas, validateCommand, validateEditRecipeDefinition } from '../shared/commands.mjs';
 
 const base = { documentId: 'document', layerId: 'photo', expectedRevision: 2 };
 const add = parameters => ({ ...base, kind: 'add_noise', value: 0, ...(parameters === undefined ? {} : { parameters }) });
@@ -39,6 +39,4 @@ test('Seeded noise recipes preserve explicit settings only in raster slots and n
   for (const kind of ['brightness', 'add_noise']) assert.throws(() => validateEditRecipeDefinition({ ...recipe, slots: [{ key: 'photo', type: 'adjustment', kind }], steps: [{ command: 'update_adjustment', target: 'photo', args: { value: 0, parameters: { seed: 1 } } }] }), { code: 'INVALID_ARGUMENTS' });
   for (const parameters of [{ amount: .001 }, { seed: 4294967296 }, { distribution: 'gaussian', threshold: 0 }]) assert.throws(() => validateEditRecipeDefinition({ ...recipe, steps: [{ ...recipe.steps[0], args: { ...recipe.steps[0].args, parameters } }] }), { code: 'INVALID_ARGUMENTS' });
   const transaction = validateCommand('apply_transaction', { documentId: base.documentId, label: recipe.name, operations: [{ command: 'add_layer_filter', args: { layerId: base.layerId, ...recipe.steps[0].args } }] });
-  assert.doesNotThrow(() => validateBackendOptions('native', 'apply_transaction', transaction));
-  assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', transaction), { code: 'UNSUPPORTED_COMMAND' });
 });

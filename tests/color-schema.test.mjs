@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateCommand, validateBackendOptions } from '../shared/commands.mjs';
+import { validateCommand } from '../shared/commands.mjs';
 
 const base = { documentId: 'doc', layerId: 'layer' };
 const stops = [{ offset: 0, color: '#AAbb00' }, { offset: 0.12345, color: '#234567' }, { offset: 1, color: '#ffffff' }];
@@ -34,14 +34,12 @@ test('gradient-map stops reject opacity, unknown fields, bad endpoints and unord
   assert.deepEqual(validateCommand('add_adjustment', { ...fields, parameters: { stops: veryClose } }).parameters.stops, veryClose);
 });
 
-test('parameterless and parameterized new adjustments reject the Photoshop bridge, including nested transactions', () => {
+test('parameterless and parameterized new adjustments are accepted in nested transactions', () => {
   for (const kind of ['channel_mixer', 'gradient_map']) {
     for (const parameters of [undefined, {}]) {
       const args = { kind, value: 0, ...(parameters ? { parameters } : {}) };
-      assert.doesNotThrow(() => validateBackendOptions('native', 'add_adjustment', args));
-      assert.throws(() => validateBackendOptions('photoshop', 'add_adjustment', args), { code: 'UNSUPPORTED_COMMAND' });
       const transaction = validateCommand('apply_transaction', { documentId: 'doc', label: 'Native color', operations: [{ command: 'add_adjustment', args }] });
-      assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', transaction), { code: 'UNSUPPORTED_COMMAND' });
+      assert.deepEqual(transaction.operations[0].args, args);
     }
   }
 });

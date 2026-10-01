@@ -5,8 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import sharp from 'sharp';
 import { NativeBackend } from '../server/native.mjs';
-import { validateCommand, validateBackendOptions } from '../shared/commands.mjs';
-import { BLEND_MODES } from '../shared/blend-modes.mjs';
+import { validateCommand } from '../shared/commands.mjs';
 import { bitmapMask, maskCoverage, transformMask } from '../server/masks.mjs';
 
 async function fixture(t) {
@@ -21,18 +20,6 @@ async function fixture(t) {
   };
   return { backend, document, dataDir, run, render };
 }
-
-test('Photoshop rejects native-only blend modes before host execution, including transaction members', () => {
-  const supported = new Set(['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'difference', 'exclusion']);
-  for (const blendMode of BLEND_MODES) {
-    const args = validateCommand('set_layer', { documentId: 'document', layerId: 'layer', blendMode });
-    assert.doesNotThrow(() => validateBackendOptions('native', 'set_layer', args));
-    const check = () => validateBackendOptions('photoshop', 'set_layer', args);
-    const checkTransaction = () => validateBackendOptions('photoshop', 'apply_transaction', { operations: [{ command: 'set_layer', args }] });
-    if (supported.has(blendMode)) { assert.doesNotThrow(check); assert.doesNotThrow(checkTransaction); }
-    else { assert.throws(check, { code: 'UNSUPPORTED_COMMAND' }); assert.throws(checkTransaction, { code: 'UNSUPPORTED_COMMAND' }); }
-  }
-});
 
 test('points-only polygon masks pass the public schema and protect all pixels outside the polygon', async t => {
   const { document, run, render } = await fixture(t);

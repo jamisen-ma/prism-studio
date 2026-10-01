@@ -389,7 +389,7 @@ export async function createHostedServer(options = {}) {
     });
   });
   server.requestTimeout = 300_000; server.headersTimeout = 15_000;
-  // No WebSocket upgrades: the Photoshop bridge is local-only.
+  // The server accepts no WebSocket upgrades.
   server.on('upgrade', (request, socket) => socket.destroy());
 
   return {

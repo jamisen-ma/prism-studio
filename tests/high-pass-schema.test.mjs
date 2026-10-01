@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { commandSchemas, validateCommand, validateBackendOptions, validateEditRecipeDefinition } from '../shared/commands.mjs';
+import { commandSchemas, validateCommand, validateEditRecipeDefinition } from '../shared/commands.mjs';
 
 const base = { documentId: 'document', layerId: 'photo', expectedRevision: 2 };
 const add = value => ({ ...base, kind: 'high_pass', value });
@@ -41,6 +41,4 @@ test('High Pass recipes require raster targets and preserve exact scalar values 
   for (const type of ['text', 'content', 'adjustment']) assert.throws(() => validateEditRecipeDefinition({ ...recipe, slots: [{ key: 'photo', type, ...(type === 'adjustment' ? { kind: 'sharpen' } : {}) }] }), { code: 'INVALID_ARGUMENTS' });
   for (const settings of [{ value: 51 }, { parameters: {} }, { parameters: { sigma: 1 } }, { blendMode: 'dissolve' }]) assert.throws(() => validateEditRecipeDefinition({ ...recipe, steps: [{ ...recipe.steps[0], args: { ...recipe.steps[0].args, ...settings } }] }), { code: 'INVALID_ARGUMENTS' });
   const transaction = validateCommand('apply_transaction', { documentId: base.documentId, label: recipe.name, operations: [{ command: 'add_layer_filter', args: { layerId: base.layerId, ...recipe.steps[0].args } }] });
-  assert.doesNotThrow(() => validateBackendOptions('native', 'apply_transaction', transaction));
-  assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', transaction), { code: 'UNSUPPORTED_COMMAND' });
 });

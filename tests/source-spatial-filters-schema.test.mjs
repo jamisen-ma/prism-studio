@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateCommand, validateBackendOptions, validateEditRecipeDefinition } from '../shared/commands.mjs';
+import { validateCommand, validateEditRecipeDefinition } from '../shared/commands.mjs';
 
 const base = { documentId: 'document', layerId: 'photo', expectedRevision: 2 };
 
@@ -24,8 +24,6 @@ test('spatial source steps participate in typed recipes and transactions without
   assert.deepEqual(validateEditRecipeDefinition(recipe), recipe);
   for (const step of recipe.steps) {
     const transaction = validateCommand('apply_transaction', { documentId: base.documentId, label: recipe.name, operations: [{ command: step.command, args: { layerId: base.layerId, ...step.args } }] });
-    assert.doesNotThrow(() => validateBackendOptions('native', 'apply_transaction', transaction));
-    assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', transaction), { code: 'UNSUPPORTED_COMMAND' });
     assert.throws(() => validateEditRecipeDefinition({ ...recipe, slots: [{ key: 'photo', type: 'text' }] }), { code: 'INVALID_ARGUMENTS' });
     const globalArgs = { documentId: base.documentId, kind: step.args.kind, value: step.args.value };
     assert.deepEqual(validateCommand('add_adjustment', globalArgs), globalArgs);

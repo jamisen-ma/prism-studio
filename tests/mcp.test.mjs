@@ -66,7 +66,8 @@ test('official MCP stdio client discovers tools and performs a masked native edi
   assert.equal(tools.find(tool => tool.name === 'prism_add_adjustment').annotations.readOnlyHint, false);
   const status = result(await call('prism_status'));
   assert.equal(status.backends.find(backend => backend.id === 'native').connected, true);
-  assert.equal(status.backends.find(backend => backend.id === 'photoshop').connected, false);
+  assert.deepEqual(status.backends.map(backend => backend.id), ['native']);
+  assert.equal(tools.find(tool => tool.name === 'prism_list_documents').inputSchema.properties.backend.const, 'native');
 
   const initial = result(await call('prism_create_document', { backend: 'native', name: 'MCP pixel verification', width: 64, height: 48, background: '#406080' })).document;
   assert.equal(initial.backend, 'native');
@@ -98,8 +99,8 @@ test('official MCP stdio client discovers tools and performs a masked native edi
   assert.equal(changed, 32 * 24);
   const conflict = error(await call('prism_add_adjustment', { ...args, requestId: 'new-stale-request' }));
   assert.equal(conflict.code, 'REVISION_CONFLICT');
-  const disconnected = error(await call('prism_list_documents', { backend: 'photoshop' }));
-  assert.equal(disconnected.code, 'PHOTOSHOP_DISCONNECTED');
+  const otherBackend = await call('prism_list_documents', { backend: 'photoshop' });
+  assert.equal(otherBackend.isError, true, 'Only the native backend is accepted');
 });
 
 test('MCP transaction and undo restore exact pixels through the live companion', { timeout: 15000 }, async t => {

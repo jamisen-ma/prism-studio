@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { z } from 'zod';
-import { commandSchemas, commandLabels, validateCommand, validateBackendOptions, readCommands, transactionCommands } from '../shared/commands.mjs';
+import { commandSchemas, commandLabels, validateCommand, readCommands, transactionCommands } from '../shared/commands.mjs';
 
 const base = { documentId: 'fill-document', expectedRevision: 3, layerId: 'fill-layer', fillOpacity: 0.375 };
 const invalid = operation => assert.throws(operation, error => ['INVALID_ARGUMENTS', 'INVALID_TRANSACTION'].includes(error.code));
@@ -43,11 +43,4 @@ test('Layer Fill transaction owns the positive revision and remains outside the 
     slots: [{ key: 'subject', type: 'raster' }], steps: [{ command: 'set_layer_fill', target: 'subject', args: { fillOpacity: 0.375 } }] }));
   invalid(() => validateCommand('set_layer', { documentId: base.documentId, layerId: base.layerId, fillOpacity: 0.5 }));
   invalid(() => validateCommand('set_layer_effects', { documentId: base.documentId, layerId: base.layerId, effects: { version: 1, fillOpacity: 0.5, styles: null } }));
-});
-
-test('Layer Fill is explicitly native-only directly and inside transactions', () => {
-  assert.doesNotThrow(() => validateBackendOptions('native', 'set_layer_fill', base));
-  assert.throws(() => validateBackendOptions('photoshop', 'set_layer_fill', base), { code: 'UNSUPPORTED_COMMAND' });
-  assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', { documentId: base.documentId, expectedRevision: 3,
-    operations: [{ command: 'set_layer_fill', args: { layerId: base.layerId, fillOpacity: 0.375 } }] }), { code: 'UNSUPPORTED_COMMAND' });
 });

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { commandSchemas, commandLabels, transactionCommands, validateCommand, validateBackendOptions } from '../shared/commands.mjs';
+import { commandSchemas, commandLabels, transactionCommands, validateCommand } from '../shared/commands.mjs';
 
 const base = { documentId: 'document', layerId: 'layer' };
 
@@ -27,6 +27,4 @@ test('layer selection is a native transaction command with the same field valida
   ] });
   assert.deepEqual(transaction.operations[0].args, { layerId: 'layer', source: 'layer-mask', maskMode: 'raw', invert: true, mode: 'add' });
   assert.throws(() => validateCommand('apply_transaction', { documentId: 'document', label: 'Reject ignored mode', operations: [{ command: 'load_layer_selection', args: { layerId: 'layer', maskMode: 'raw' } }] }), { code: 'INVALID_ARGUMENTS' });
-  assert.throws(() => validateBackendOptions('photoshop', 'load_layer_selection', validateCommand('load_layer_selection', base)), { code: 'UNSUPPORTED_COMMAND' });
-  assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', transaction), { code: 'UNSUPPORTED_COMMAND' });
 });

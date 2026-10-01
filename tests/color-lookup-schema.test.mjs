@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateCommand, validateBackendOptions, validateEditRecipeDefinition } from '../shared/commands.mjs';
+import { validateCommand, validateEditRecipeDefinition } from '../shared/commands.mjs';
 import { COLOR_LOOKUP_LIMITS } from '../shared/color-lookup.mjs';
 
 const descriptor = { asset: 'ab'.repeat(32), bytes: 122, gridSize: 2, inputSpace: 'srgb', sourceName: 'Look.cube', title: 'Warm' };
@@ -40,12 +40,7 @@ test('Color Lookup transactions pin the outer revision and admit aggregate decod
   assert.throws(() => validateCommand('apply_transaction', { ...two, operations: [...two.operations, { command: 'import_color_lookup', args }] }), { code: 'LIMIT_EXCEEDED' });
 });
 
-test('Color Lookup stays native-only and asset-dependent recipes refuse without prohibiting ordinary recipes', () => {
-  for (const [command, args] of [['import_color_lookup', upload], ['add_adjustment', { documentId: 'doc', kind: 'color_lookup', value: 0, parameters: descriptor }], ['update_adjustment', { documentId: 'doc', layerId: 'grade', parameters: descriptor }]]) {
-    assert.doesNotThrow(() => validateBackendOptions('native', command, args));
-    assert.throws(() => validateBackendOptions('photoshop', command, args), { code: 'UNSUPPORTED_COMMAND' });
-    assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', { operations: [{ command, args }] }), { code: 'UNSUPPORTED_COMMAND' });
-  }
+test('Color Lookup asset-dependent recipes refuse without prohibiting ordinary recipes', () => {
   const source = { name: 'Look', slots: [{ key: 'photo', type: 'raster' }], steps: [{ command: 'add_layer_filter', target: 'photo', args: { kind: 'color_lookup', value: 0, enabled: false, parameters: descriptor } }] };
   const global = { name: 'Look', slots: [{ key: 'grade', type: 'adjustment', kind: 'color_lookup' }], steps: [{ command: 'update_adjustment', target: 'grade', args: { value: 0, parameters: descriptor } }] };
   for (const recipe of [source, global]) {

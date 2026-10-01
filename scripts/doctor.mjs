@@ -1,6 +1,5 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { readOpenAIKey } from '../server/ai-config.mjs';
 import { modelStatus } from '../server/segmentation-model.mjs';
@@ -19,14 +18,6 @@ if(process.argv.includes('--check-api')){
   catch{checks.push({check:'Optional OpenAI API',status:'configuration error',detail:'Run npm run configure:ai only if you want to use the API route.'});}
 }
 checks.push({check:'Node.js',status:Number(process.versions.node.split('.')[0])>=22?'ready':'update required',detail:process.version});
-if(process.argv.includes('--check-adobe')){
-let apps=[];
-for(const directory of ['/Applications',path.join(os.homedir(),'Applications')]){
-  try{apps.push(...(await fs.readdir(directory)).filter(item=>/photoshop|uxp developer/i.test(item)));}catch{}
-}
-checks.push({check:'Photoshop installation',status:apps.some(a=>/photoshop/i.test(a))?'found':'not found in standard folders',detail:apps.filter(a=>/photoshop/i.test(a)).join(', ')||'Install Photoshop 25+ to validate the bridge in the real host.'});
-checks.push({check:'UXP Developer Tool',status:apps.some(a=>/uxp developer/i.test(a))?'found':'not found in standard folders',detail:'Load photoshop-plugin/manifest.json using Adobe UXP Developer Tool.'});
-}
 try{await fs.access(path.join(root,'dist/index.html'));checks.push({check:'Production workspace',status:'built',detail:'npm start serves the compiled workspace on port 43120.'});}
 catch{checks.push({check:'Production workspace',status:'not built',detail:'Run npm run build; development uses port 43110.'});}
 try{
@@ -37,7 +28,6 @@ try{
   checks.push({check:'Companion service',status:'running',detail:`Prism ${status.version}`});
   const chatResponse=await fetch(`${process.env.PRISM_URL||'http://127.0.0.1:43120'}/api/chat`,{headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(5000)});
   if(chatResponse.ok){const chat=await chatResponse.json();checks.push({check:'Chat editing agent',status:chat.available?'ready':'unavailable',detail:chat.available?'The Chat sidebar can choose native edits, image generation, or both.':chat.message||'Check local Codex sign-in and companion settings.'});}
-  if(process.argv.includes('--check-adobe'))checks.push({check:'Optional Photoshop bridge',status:status.bridge.connected?'connected':'not connected',detail:status.bridge.connected?`Photoshop ${status.bridge.appVersion}`:'Optional compatibility bridge; not required for Prism Native.'});
   checks.push({check:'Native backend',status:'ready',detail:`${status.backends.find(b=>b.id==='native')?.commands.length||0} commands available; 8-bit sRGB initial implementation.`});
 }catch{checks.push({check:'Companion service',status:'not reachable',detail:'Run npm run dev or npm start.'});}
 for(const item of checks)console.log(`${item.check}: ${item.status}\n  ${item.detail}`);

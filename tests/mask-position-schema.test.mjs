@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateCommand, validateBackendOptions, readCommands, transactionCommands } from '../shared/commands.mjs';
+import { validateCommand, readCommands, transactionCommands } from '../shared/commands.mjs';
 
 const base = { documentId: 'document', layerId: 'layer' };
 
@@ -35,14 +35,11 @@ test('positioning and rasterizing are native-only transaction mutations and cann
   for (const operation of operations) {
     assert.equal(readCommands.has(operation.command), false);
     assert.equal(transactionCommands.has(operation.command), true);
-    assert.throws(() => validateBackendOptions('photoshop', operation.command, operation.args), { code: 'UNSUPPORTED_COMMAND' });
-    assert.doesNotThrow(() => validateBackendOptions('native', operation.command, operation.args));
     assert.throws(() => validateCommand('save_edit_recipe', {
       documentId: base.documentId, name: 'Disallowed mask operation',
       slots: [{ key: 'photo', type: 'raster' }],
       steps: [{ command: operation.command, target: 'photo', args: {} }],
     }), { code: 'INVALID_ARGUMENTS' });
   }
-  assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', transaction), { code: 'UNSUPPORTED_COMMAND' });
   assert.throws(() => validateCommand('apply_transaction', { documentId: base.documentId, label: 'Invalid inner revision', operations: [{ ...operations[0], args: { ...operations[0].args, expectedRevision: 3 } }] }), { code: 'INVALID_TRANSACTION' });
 });

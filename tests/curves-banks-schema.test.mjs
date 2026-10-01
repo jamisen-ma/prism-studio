@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateCommand, validateBackendOptions, validateEditRecipeDefinition } from '../shared/commands.mjs';
+import { validateCommand, validateEditRecipeDefinition } from '../shared/commands.mjs';
 
 const identity = [{ x: 0, y: 0 }, { x: 255, y: 255 }];
 const close = [{ x: 0, y: 255 }, { x: Number.MIN_VALUE, y: 0 }, { x: 0.1, y: 64.5 }, { x: 0.10000000000000002, y: 64 }, { x: 255, y: 0.49999999999999994 }];
@@ -32,12 +32,9 @@ test('banked Curves rejects mixed representations, wrong bank fields and invalid
 test('explicit Curves representation transitions stay native-only directly and in transactions', () => {
   for (const command of commands) for (const parameters of [{ mode: 'banks' }, { mode: 'single', channel: 'blue' }]) {
     const args = argumentsFor(command, parameters);
-    assert.doesNotThrow(() => validateBackendOptions('native', command, args));
-    assert.throws(() => validateBackendOptions('photoshop', command, args), { code: 'UNSUPPORTED_COMMAND' });
     const operationArgs = { ...args }; delete operationArgs.documentId;
     const transaction = validateCommand('apply_transaction', { documentId: 'doc', expectedRevision: 1, label: 'Explicit curves conversion', operations: [{ command, args: operationArgs }] });
     assert.deepEqual(transaction.operations[0].args.parameters, parameters);
-    assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', transaction), { code: 'UNSUPPORTED_COMMAND' });
   }
 });
 

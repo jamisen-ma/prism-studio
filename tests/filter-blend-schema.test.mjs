@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { commandSchemas, validateCommand, validateBackendOptions, validateEditRecipeDefinition } from '../shared/commands.mjs';
+import { commandSchemas, validateCommand, validateEditRecipeDefinition } from '../shared/commands.mjs';
 
 const modes = ['normal','darken','multiply','color_burn','linear_burn','darker_color','lighten','screen','color_dodge','linear_dodge','lighter_color','overlay','soft_light','hard_light','vivid_light','linear_light','pin_light','hard_mix','difference','exclusion','subtract','divide','hue','saturation','color','luminosity'];
 const base = { documentId: 'document', layerId: 'photo', expectedRevision: 2 };
@@ -40,8 +40,6 @@ test('filter blend recipe fields stay source-only, explicit and native-transacti
     assert.deepEqual(validateEditRecipeDefinition(recipe), recipe);
     for (const type of ['text', 'content', 'adjustment']) assert.throws(() => validateEditRecipeDefinition({ ...recipe, slots: [{ key: 'photo', type, ...(type === 'adjustment' ? { kind: 'brightness' } : {}) }] }), { code: 'INVALID_ARGUMENTS' });
     const transaction = validateCommand('apply_transaction', { documentId: base.documentId, label: recipe.name, operations: [{ command: 'add_layer_filter', args: { layerId: base.layerId, ...recipe.steps[0].args } }, { command: 'update_layer_filter', args: { layerId: base.layerId, filterId: 'filter', blendMode } }] });
-    assert.doesNotThrow(() => validateBackendOptions('native', 'apply_transaction', transaction));
-    assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', transaction), { code: 'UNSUPPORTED_COMMAND' });
   }
   assert.throws(() => validateEditRecipeDefinition({ name: 'Wrong scope', slots: [{ key: 'tone', type: 'adjustment', kind: 'brightness' }], steps: [{ command: 'update_adjustment', target: 'tone', args: { value: 1, blendMode: 'multiply' } }] }), { code: 'INVALID_ARGUMENTS' });
 });

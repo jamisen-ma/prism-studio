@@ -81,16 +81,13 @@ try{
   const metadata=await sharp(exported).metadata();assert.equal(metadata.width,640);assert.equal(metadata.height,480);
   await page.screenshot({path:path.join(artifacts,'edited-workspace.png'),fullPage:true});
   await page.locator('.backend-button').click();
-  await page.locator('.backend-popover').getByRole('button',{name:/Adobe Photoshop/}).click();
-  await page.getByRole('button',{name:'Connect Photoshop',exact:true}).waitFor();
-  await page.getByRole('button',{name:'Connect Photoshop',exact:true}).click();
-  await page.getByText('Waiting for the Photoshop plugin',{exact:true}).waitFor();
-  await page.screenshot({path:path.join(artifacts,'photoshop-setup.png'),fullPage:true});
+  await page.getByText('Add the local MCP server',{exact:true}).waitFor();
+  await page.screenshot({path:path.join(artifacts,'mcp-setup.png'),fullPage:true});
   await page.getByRole('button',{name:'Close dialog'}).click();
   await page.setViewportSize({width:900,height:800});
   await page.screenshot({path:path.join(artifacts,'compact-workspace.png'),fullPage:true});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false,'Compact layout should not overflow horizontally');
   assert.deepEqual(errors,[],'No uncaught browser errors');
-  console.log('Browser checks passed: import, actual adjustment layers, undo, selection recovery, save, create, editable text, PNG export, disconnected Photoshop setup, compact layout.');
+  console.log('Browser checks passed: import, actual adjustment layers, undo, selection recovery, save, create, editable text, PNG export, MCP setup, compact layout.');
   console.log(`Screenshots: ${artifacts}`);
 }finally{await browser.close();if(companion)await companion.close();await fs.rm(testData,{recursive:true,force:true});}

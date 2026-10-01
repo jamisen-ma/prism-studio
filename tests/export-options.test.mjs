@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import sharp from 'sharp';
 import { NativeBackend } from '../server/native.mjs';
-import { validateCommand, validateBackendOptions } from '../shared/commands.mjs';
+import { validateCommand } from '../shared/commands.mjs';
 
 async function fixture(t) {
   const dataDir=await fs.mkdtemp(path.join(os.tmpdir(),'prism-export-options-'));
@@ -53,6 +53,4 @@ test('export capabilities and format-specific options reject silent incompatibil
     assert.throws(()=>validateCommand('export_document',{documentId:document.id,...args}),{code:'INVALID_ARGUMENTS'});
     await assert.rejects(native.execute('export_document',{documentId:document.id,...args}));
   }
-  assert.throws(()=>validateBackendOptions('photoshop','export_document',{format:'tiff'}),{code:'UNSUPPORTED_COMMAND'});
-  assert.throws(()=>validateBackendOptions('photoshop','export_document',{format:'jpeg',matte:'#000000'}),{code:'UNSUPPORTED_COMMAND'});
 });

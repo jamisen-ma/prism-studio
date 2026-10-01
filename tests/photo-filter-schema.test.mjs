@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { commandSchemas, validateCommand, validateBackendOptions } from '../shared/commands.mjs';
+import { commandSchemas, validateCommand } from '../shared/commands.mjs';
 
 const documentId='photo-filter-schema',layerId='photo-filter-layer',filterId='photo-filter-entry';
 const additions=['add_adjustment','add_layer_filter'];
@@ -41,12 +41,3 @@ test('Photo Filter participates in transactions and dependency-free recipes with
   invalid(()=>validateCommand('save_edit_recipe',{...recipe,slots:[{key:'grade',type:'adjustment',kind:'color_lookup'}],steps:[recipe.steps[1]]}));
 });
 
-test('Photo Filter authoring explicitly rejects on the optional Photoshop bridge',()=>{
-  for(const command of [...additions,...edits])for(const parameters of [{color:'#ff9500'},{density:25}]){
-    const args={...fields(command),...(additions.includes(command)?{kind:'photo_filter',value:0}:{}),parameters};
-    assert.throws(()=>validateBackendOptions('photoshop',command,args),{code:'UNSUPPORTED_COMMAND'});
-    assert.doesNotThrow(()=>validateBackendOptions('native',command,args));
-  }
-  assert.throws(()=>validateBackendOptions('photoshop','add_adjustment',{documentId,kind:'photo_filter',value:0}),{code:'UNSUPPORTED_COMMAND'});
-  assert.doesNotThrow(()=>validateBackendOptions('photoshop','add_adjustment',{documentId,kind:'brightness',value:5}));
-});

@@ -4,8 +4,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { once } from 'node:events';
-import WebSocket from 'ws';
 import sharp from 'sharp';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
@@ -217,34 +215,6 @@ test('competing professional edits enforce expectedRevision and preserve the win
   const staleMask = await env.command('set_layer_mask', { documentId: document.id, expectedRevision: document.revision, layerId: args.layerId, mask: { x: 0, y: 0, width: 4, height: 4 } });
   assert.equal(staleMask.status, 409);
   assert.deepEqual((await env.preview(document.id)).data, pixels);
-});
-
-test('unsupported Photoshop options return explicit errors before any command reaches a fake UXP peer', async t => {
-  const env = await fixture(t);
-  const peer = new WebSocket(env.url.replace('http:', 'ws:') + '/bridge');
-  t.after(() => peer.terminate());
-  await once(peer, 'open');
-  const welcome = once(peer, 'message');
-  peer.send(JSON.stringify({ type: 'hello', token: env.app.token, pluginVersion: 'test-fake', appVersion: 'test-fake', capabilities: ['add_adjustment', 'add_text', 'apply_transaction'] }));
-  assert.equal(JSON.parse((await welcome)[0].toString()).type, 'welcome');
-  const received = [];
-  peer.on('message', bytes => received.push(JSON.parse(bytes.toString())));
-  const unsupported = [
-    ['add_adjustment', { kind: 'levels', value: 0, parameters: levelParameters }, /scalar adjustments/i],
-    ['add_adjustment', { kind: 'curves', value: 0, parameters: curveParameters }, /scalar adjustments/i],
-    ['add_adjustment', { kind: 'exposure', value: 1, mask: { shape: 'ellipse', x: 0, y: 0, width: 10, height: 10 } }, /rectangular masks/i],
-    ['add_text', { text: 'Unsupported style', x: 0, y: 0, fontSize: 12, color: '#ffffff', fontFamily: 'serif' }, /typography.*native/i],
-    ['get_histogram', {}, /does not support get_histogram/i],
-    ['paint_stroke', { layerId: 'fake-layer', tool: 'pencil', points: [{ x: 3, y: 3 }], size: 3, hardness: 1, opacity: 1, color: '#ffffff' }, /does not support paint_stroke/i],
-    ['apply_transaction', { label: 'Unsupported native curve', operations: [{ command: 'add_adjustment', args: { kind: 'curves', value: 0, parameters: curveParameters } }] }, /scalar adjustments/i],
-  ];
-  for (const [command, args, message] of unsupported) {
-    const response = await env.command(command, { documentId: 'fake-document', ...args }, { backend: 'photoshop' });
-    assert.equal(response.status, 400, JSON.stringify(response.body));
-    assert.equal(response.body.error.code, 'UNSUPPORTED_COMMAND');
-    assert.match(response.body.error.message, message);
-  }
-  assert.deepEqual(received, [], 'Unsupported options must never be silently stripped or forwarded');
 });
 
 test('official MCP client can discover professional tools, paint pencil and color replacement, and read real histograms', { timeout: 15000 }, async t => {

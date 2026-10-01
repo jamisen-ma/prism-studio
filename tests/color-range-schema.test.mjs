@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { z } from 'zod';
-import { commandSchemas, validateCommand, validateBackendOptions, checkColorRangeCommandArguments, readCommands, transactionCommands } from '../shared/commands.mjs';
+import { commandSchemas, validateCommand, checkColorRangeCommandArguments, readCommands, transactionCommands } from '../shared/commands.mjs';
 const documentId = 'color-range-schema';
 const invalid = operation => assert.throws(operation, error => ['INVALID_ARGUMENTS', 'INVALID_TRANSACTION'].includes(error.code));
 const load = (patch = {}) => ({ documentId, expectedRevision: 1, colors: ['#aAbBcC'], ...patch });
@@ -73,15 +73,12 @@ test('Color Range transaction load pins the outer revision, preserves settings a
   assert.ok(transactionCommands.has('load_color_range_selection')); assert.ok(!transactionCommands.has('get_color_range_preview'));
 });
 
-test('Color Range MCP schemas are representable and both commands refuse optional Photoshop routing', () => {
+test('Color Range MCP schemas are representable', () => {
   for (const command of ['get_color_range_preview', 'load_color_range_selection']) {
     const schema = z.toJSONSchema(commandSchemas[command]);
     assert.equal(schema.properties.colors.minItems, 1); assert.equal(schema.properties.colors.maxItems, 8);
     assert.equal(schema.properties.colors.items.minLength, 7); assert.equal(schema.properties.colors.items.maxLength, 7);
     assert.equal(schema.properties.tolerance.default, 32); assert.equal(schema.additionalProperties, false);
     assert.equal(schema.required.includes('expectedRevision'), command === 'load_color_range_selection');
-    assert.throws(() => validateBackendOptions('photoshop', command, load()), { code: 'UNSUPPORTED_COMMAND' });
-    assert.doesNotThrow(() => validateBackendOptions('native', command, load()));
   }
-  assert.throws(() => validateBackendOptions('photoshop', 'apply_transaction', transaction({ colors: ['#123456'] })), { code: 'UNSUPPORTED_COMMAND' });
 });
