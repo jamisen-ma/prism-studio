@@ -39,6 +39,7 @@ export function hostedConfigFromEnv(env = process.env) {
     dataRoot: env.PRISM_DATA_ROOT || '/data',
     signupCode: env.PRISM_SIGNUP_CODE || undefined,
     signupOpen: env.PRISM_ALLOW_SIGNUP !== '0',
+    guestAccess: env.PRISM_GUEST === '1',
     segmentationEnabled: env.PRISM_SEGMENTATION !== '0',
     segmentationDir: env.PRISM_SEGMENTATION_DIR || undefined,
     codexWorkerEnabled: env.PRISM_CODEX_WORKER !== '0',
@@ -109,7 +110,7 @@ class RateLimiter {
 
 export async function createHostedServer(options = {}) {
   const config = { ...hostedConfigFromEnv({}), ...options };
-  const { port, dataRoot, signupCode, signupOpen, segmentationEnabled, maxUploadBytes, maxDocuments, maxStorageBytes, maxUsers, idleMs } = config;
+  const { port, dataRoot, signupCode, signupOpen, guestAccess, segmentationEnabled, maxUploadBytes, maxDocuments, maxStorageBytes, maxUsers, idleMs } = config;
   const root = path.resolve(dataRoot);
   const accountsFile = path.join(root, 'accounts', 'users.json'), sessionsFile = path.join(root, 'accounts', 'sessions.json');
   await fs.mkdir(path.join(root, 'users'), { recursive: true, mode: 0o700 });
@@ -140,8 +141,9 @@ export async function createHostedServer(options = {}) {
     return forwarded || request.socket.remoteAddress || 'unknown';
   }
   function secureRequest(request) { return request.headers['x-forwarded-proto'] === 'https' || Boolean(request.socket.encrypted); }
-  function trusted(request) {
-    if (request.headers['sec-fetch-site'] === 'cross-site') return false;
+  // Page loads may arrive from links on other sites; only API calls must be same-site.
+  function trusted(request, { navigation = false } = {}) {
+    if (!navigation && request.headers['sec-fetch-site'] === 'cross-site') return false;
     const origin = request.headers.origin;
     if (origin && !trustedOrigins().has(origin)) return false;
     const host = String(request.headers['x-forwarded-host'] || request.headers.host || '').toLowerCase();
@@ -211,6 +213,16 @@ export async function createHostedServer(options = {}) {
     if (findUser(email)) throw fail('CONFLICT', 'An account with this email already exists. Sign in instead.');
     const user = { id: randomUUID(), email, ...(await hashPassword(password)), createdAt: new Date().toISOString() };
     if (findUser(email)) throw fail('CONFLICT', 'An account with this email already exists. Sign in instead.');
+    users.set(user.id, user);
+    try { await saveAccounts(); } catch (error) { users.delete(user.id); throw error; }
+    await createSession(request, response, user);
+  }
+  // Guest access: a visitor without a session gets a passwordless account bound
+  // to their session cookie. Losing the cookie loses access to that workspace.
+  async function startGuest(request, response) {
+    limiter.hit(`guest:${clientIp(request)}`, 20, 60 * 60_000);
+    if (users.size >= maxUsers) throw fail('FORBIDDEN', 'This server has reached its account limit.');
+    const user = { id: randomUUID(), email: 'Guest', guest: true, createdAt: new Date().toISOString() };
     users.set(user.id, user);
     try { await saveAccounts(); } catch (error) { users.delete(user.id); throw error; }
     await createSession(request, response, user);
@@ -359,7 +371,8 @@ export async function createHostedServer(options = {}) {
       owner.lastUsed = Date.now();
       await owner.app.handleChatTool(request, response, url); return;
     }
-    if (!trusted(request)) throw fail('FORBIDDEN', 'This request did not come from the Prism workspace.');
+    const navigation = !url.pathname.startsWith('/api/') && ['GET', 'HEAD'].includes(request.method);
+    if (!trusted(request, { navigation })) throw fail('FORBIDDEN', 'This request did not come from the Prism workspace.');
     if (url.pathname.startsWith('/api/')) {
       if (!['GET', 'HEAD'].includes(request.method)) {
         const declared = request.headers['content-length'];
@@ -370,6 +383,7 @@ export async function createHostedServer(options = {}) {
       if (url.pathname === '/api/auth/signin' && request.method === 'POST') { await signIn(request, response); return; }
       if (url.pathname === '/api/session' && request.method === 'GET') {
         const session = currentSession(request);
+        if (!session && guestAccess) { await startGuest(request, response); return; }
         if (!session) { json(response, 401, { ok: false, error: { code: 'SIGN_IN_REQUIRED', message: 'Sign in to continue.' }, hosted: signupInfo() }); return; }
         json(response, 200, { token: session.record.csrf, hosted: publicInfo(session.user) }); return;
       }
@@ -417,8 +431,9 @@ export async function startHostedFromEnv() {
   if (!config.publicUrl) console.warn('PRISM_PUBLIC_URL is not set; only http://localhost and http://127.0.0.1 origins will be accepted.');
   if (!config.signupCode && config.signupOpen) console.warn('PRISM_SIGNUP_CODE is not set; anyone who can reach this server can create an account.');
   const app = await createHostedServer(config);
-  const port = await app.listen();
-  console.log(`Prism Studio (hosted) is listening on 0.0.0.0:${port}${config.publicUrl ? ` for ${config.publicUrl}` : ''}. Data: ${app.config.dataRoot}`);
+  const host = process.env.PRISM_HOST || '0.0.0.0';
+  const port = await app.listen(host);
+  console.log(`Prism Studio (hosted) is listening on ${host}:${port}${config.publicUrl ? ` for ${config.publicUrl}` : ''}. Data: ${app.config.dataRoot}`);
   let stopping = false;
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, async () => { if (stopping) return; stopping = true; await app.close(); process.exit(0); });
   return app;

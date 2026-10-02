@@ -70,7 +70,8 @@
     "test:layer-fill-browser": "node tests/layer-fill-browser.mjs",
     "test:codex-worker-browser": "node tests/codex-worker-browser.mjs",
     "test:chat-browser": "node tests/chat-browser.mjs",
-    "test:chat-attachments-browser": "node tests/chat-attachments-browser.mjs"
+    "test:chat-attachments-browser": "node tests/chat-attachments-browser.mjs",
+    "share": "node scripts/share.mjs"
   },
   "engines": {
     "node": ">=22.12.0"
